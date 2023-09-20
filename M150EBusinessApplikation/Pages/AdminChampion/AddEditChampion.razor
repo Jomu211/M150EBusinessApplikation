@@ -1,0 +1,175 @@
+﻿@page "/addchampion"
+@page "/editchampion/{Id:int}"
+@using System.Security.Claims
+@using BootstrapBlazor.Components;
+@using M150EBusinessApplikation.Data;
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Mvc;
+@using Microsoft.EntityFrameworkCore
+@using System.Diagnostics.CodeAnalysis;
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject ProtectedLocalStorage ProtectedLocalStorageStore
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+@inject HttpClient _httpClient
+@attribute [Authorize(Roles = "Admin")]
+@inject ApplicationDbContext db
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject DialogService DialogService
+@inject Microsoft.AspNetCore.Components.NavigationManager navigation
+
+<h3 class="text-center loginContainer">@Title</h3>
+
+<EditForm Model="@champion" OnValidSubmit="HandleValid">
+    <DataAnnotationsValidator />
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <input class="form-control" type="text"
+                       placeholder="Name"
+                       @bind-value="@champion.Name" />
+                <ValidationMessage For="() => champion.Name" />
+            </div>
+
+            <div class="col">
+
+                <input class="form-control" type="text"
+                       placeholder="Gender"
+                       @bind-value="@champion.Gender" />
+                <ValidationMessage For="() => champion.Gender" />
+            </div>
+
+            <div class="col">
+
+                <input class="form-control" type="text"
+                       placeholder="Region"
+                       @bind-value="@champion.Region" />
+                <ValidationMessage For="() => champion.Region" />
+
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <input class="form-control" type="text"
+                       placeholder="Haircolor"
+                       @bind-value="@champion.Head.Haircolor" />
+                <ValidationMessage For="() => champion.Head.Haircolor" />
+            </div>
+
+            <div class="col">
+
+                <input class="form-control" type="text"
+                       placeholder="Headgear"
+                       @bind-value="@champion.Head.Headgear" />
+                <ValidationMessage For="() => champion.Head.Headgear" />
+            </div>
+
+            <div class="col">
+
+                <input class="form-control" type="text"
+                       placeholder="Other"
+                       @bind-value="@champion.Head.Other" />
+                <ValidationMessage For="() => champion.Head.Other" />
+
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <input class="form-control" type="text"
+                       placeholder="Combat Style"
+                       @bind-value="@champion.CombatStyle" />
+                <ValidationMessage For="() => champion.CombatStyle" />
+            </div>
+
+            <div class="col">
+
+                <input class="form-control" type="text"
+                       placeholder="Resource"
+                       @bind-value="@champion.Resource" />
+                <ValidationMessage For="() => champion.Resource" />
+            </div>
+
+            <div class="col">
+
+                <input class="form-control" type="text"
+                       placeholder="Image URL"
+                       @bind-value="@champion.ImageUrl" />
+                <ValidationMessage For="() => champion.ImageUrl" />
+
+            </div>
+        </div>
+        <div class="row">
+
+            <div class="col">
+                <button type="button" class="ml-md-auto btn btn-primary" @onclick="() => cancel()">Cancel</button>
+            </div>
+            <div class="col">
+            </div>
+            <div class="col">
+                <button type="submit" class="ml-md-auto btn btn-primary" style="float: right;margin-right: -8px;">
+                    @ButtonTxt
+                </button>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+    protected string Title = "Add new Champion";
+    protected string ButtonTxt = "Add";
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id != 0)
+        {
+            Title = "Edit Champion";
+            ButtonTxt = "Edit";
+            champion = await db.Champions.Include(c => c.Head).FirstOrDefaultAsync(c => c.Id == Id);
+        }
+    }
+
+    private Champion champion = new Champion();
+    protected override void OnInitialized()
+    {
+        champion.Head = new Head();
+
+    }
+    private async Task HandleValid()
+    {
+        //add validation and error handling
+        try
+        {
+            if (champion.Id != 0)
+            {
+                db.Entry(champion).State = EntityState.Modified;
+                db.Entry(champion.Head).State = EntityState.Modified;
+            }
+            else
+            {
+                db.Entry(champion).State = EntityState.Added;
+                db.Entry(champion.Head).State = EntityState.Added;
+
+            }
+
+            await db.SaveChangesAsync();
+            navigation.NavigateTo("/championgameadmin");
+        }
+        catch (Exception e)
+        {
+            throw e;
+        }
+
+    }
+
+    void cancel()
+    {
+        navigation.NavigateTo("/championgameadmin");
+    }
+}

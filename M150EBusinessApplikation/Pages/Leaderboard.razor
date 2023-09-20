@@ -1,0 +1,75 @@
+﻿@page "/leaderboard"
+@using M150EBusinessApplikation.Data;
+
+@attribute [Authorize(Roles = "Admin, User")]
+@inject ApplicationDbContext Db
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+<style>
+    .leaderboardContainer {
+        display: flex;
+        flex-direction: row;
+        text-align: center;
+        font-size: 50px;
+        font-family: 'Poppins';
+        justify-content: center;
+        text-shadow: #333 1px 0 10px;
+    }
+
+    .deleteLead {
+        cursor: pointer;
+
+</style>
+<div class="leaderboardContainer">
+    <table>
+        <thead>
+            <tr>
+                <th class="text-center">Username</th>
+                <th class="text-center">Tries</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in LeaderboardList.OrderBy(t => t.Tries).Take(5))
+            {
+                <tr>
+                    <td class="text-center">@item.Username</td>
+                    <td class="text-center">@item.Tries</td>
+                    <AuthorizeView Roles="Admin">
+                        <td><i class="fa-solid fa-trash deleteLead" @onclick="() => DeleteLead(item.Id)"></i></td>
+                    </AuthorizeView>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+</div>
+
+
+@code {
+    protected List<Data.UserProfil> LeaderboardList = null!;
+
+    protected override void OnInitialized()
+    {
+        LoadLeaderboard();
+    }
+    private void LoadLeaderboard()
+    {
+        LeaderboardList = Db.UserProfiles.ToList();
+    }
+
+    private void DeleteLead(int id)
+    {
+
+        var lead = Db.UserProfiles.FirstOrDefault(t => t.Id == id);
+        if (lead != null)
+        {
+            Db.UserProfiles.Remove(lead);
+            Db.SaveChanges();
+            LoadLeaderboard();
+        }
+    }
+
+
+
+    
+}

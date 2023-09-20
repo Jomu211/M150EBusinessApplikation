@@ -1,0 +1,80 @@
+﻿@page "/shopindex"
+@using System.Security.Claims
+@using BootstrapBlazor.Components;
+@using M150EBusinessApplikation.Data;
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.EntityFrameworkCore
+
+@inject ProtectedLocalStorage ProtectedLocalStorageStore
+@inject IJSRuntime JsRuntime
+@attribute [Authorize(Roles = "Admin, User")]
+@inject ApplicationDbContext Db
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject DialogService DialogService
+
+@{
+    
+}
+
+<PageTitle>Shop</PageTitle>
+
+<h1>Shop</h1>
+
+@*@if (products == null)
+{
+        <p><em>Loading...</em></p>
+}
+else
+{
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Buy</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var product in products)
+            {
+                        <tr>
+                            <td>@product.Name</td>
+                            <td>@product.Price</td>
+                            <td>@product.Quantity</td>
+                            <td><button class="btn btn-primary" @onclick="() => BuyProduct(product)">Buy</button></td>
+                        </tr>
+            }
+            </tbody>
+        </table>
+}*@
+@*
+@code {
+    private List<Product>? products;
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await Db.Products.ToListAsync();
+    }
+
+    private async Task BuyProduct(Product product)
+    {
+        var user = (await GetAuthenticationStateAsync.GetAuthenticationStateAsync()).User;
+        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userDb = await Db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (userDb != null)
+        {
+            if (userDb.Balance >= product.Price)
+            {
+                userDb.Balance -= product.Price;
+                product.Quantity--;
+                await Db.SaveChangesAsync();
+                await DialogService.ShowMessage("Success", "You bought the product!");
+            }
+            else
+            {
+                await DialogService.ShowMessage("Error", "You don't have enough money!");
+            }
+        }
+    }
+}*@

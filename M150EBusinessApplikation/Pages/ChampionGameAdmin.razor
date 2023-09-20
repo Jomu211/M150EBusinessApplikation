@@ -1,0 +1,254 @@
+﻿@page "/championgameadmin"
+@using System.Security.Claims
+@using M150EBusinessApplikation.Data;
+@using Microsoft.EntityFrameworkCore
+
+@attribute [Authorize(Roles = "Admin")]
+@inject ApplicationDbContext Db
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
+<style>
+    .adminGrid {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        justify-content: center;
+        align-items: flex-start;
+        margin: 10px 55px 10px 55px;
+    }
+
+    .adminBox {
+        box-shadow: #333 1px 0 10px;
+        border-radius: 10px;
+        margin: 8px;
+        width: calc((4vw + 5.25vh) / 2);
+        height: calc((4vw + 5.25vh) / 2);
+        overflow: hidden;
+        -webkit-transition: 0.6s;
+        -webkit-transform-style: preserve-3d;
+        -moz-transition: 0.6s;
+        -moz-transform-style: preserve-3d;
+        -o-transition: 0.6s;
+        -o-transform-style: preserve-3d;
+        transition: 0.6s;
+        transform-style: preserve-3d;
+        position: relative;
+        -webkit-perspective: 1000;
+        -moz-perspective: 1000;
+        -o-perspective: 1000;
+        perspective: 1000;
+    }
+
+        .adminBox:has(.backAdmin):hover {
+            cursor: pointer;
+        }
+
+        .adminBox:has(.backIsActive):hover {
+            cursor: default;
+            filter: none;
+        }
+
+        .adminBox:has(.backIsActive) > .backAdmin {
+            opacity: 0.55;
+            background-color: transparent;
+        }
+
+    .adminControl a.crudButton {
+        box-shadow: #333 1px 0 10px;
+        border-radius: 10px;
+    }
+
+    .adminBox a.crudHalfButton {
+        height: 50%;
+        width: 100%;
+        margin: 0px !important;
+        padding: 11px;
+    }
+
+    .frontAdmin {
+        z-index: 2;
+    }
+
+    .backAdmin, .frontAdmin {
+        width: 115%;
+        height: 115%;
+        object-fit: cover;
+        box-shadow: #333 1px 0 10px;
+        position: relative;
+        top: -7.5%;
+        left: -7.5%;
+        position: absolute;
+    }
+
+    .frontAdmin, .backAdmin {
+        -webkit-transition: all 0.3s ease-in-out;
+        -moz-transition: all 0.3s ease-in-out;
+        -o-transition: all 0.3s ease-in-out;
+        transition: all 0.3s ease-in-out;
+    }
+
+    article.content.px-4 {
+        background-image: url(/images/gras1.jpeg);
+        background-size: 100%;
+    }
+
+    h3.text-center {
+        font-size: 70px;
+    }
+
+    div.adminControl {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin: 20px 20px 0px 20px;
+    }
+
+
+
+
+    .parent {
+        display: block;
+        position: relative;
+        float: left;
+        line-height: 30px;
+        background-color: #4FA0D8;
+        border-right: #CCC 1px solid;
+    }
+
+        .parent a {
+            margin: 10px;
+            color: #FFFFFF;
+            text-decoration: none;
+        }
+
+        .parent:hover > ul {
+            display: block;
+            position: absolute;
+        }
+
+    .child {
+        display: none;
+    }
+
+        .child li {
+            background-color: #E4EFF7;
+            line-height: 30px;
+            border-bottom: #CCC 1px solid;
+            border-right: #CCC 1px solid;
+            width: 100%;
+        }
+
+            .child li a {
+                color: #000000;
+            }
+
+    ul {
+        list-style: none;
+        margin: 0;
+        padding: 0px;
+        min-width: 10em;
+    }
+
+        ul ul ul {
+            left: 100%;
+            top: 0;
+            margin-left: 1px;
+        }
+
+    li:hover {
+        background-color: #95B4CA;
+    }
+
+    .parent li:hover {
+        background-color: #F0F0F0;
+    }
+
+    .expand {
+        font-size: 12px;
+        float: right;
+        margin-right: 5px;
+    }
+
+    .frontAnim {
+        animation: wiggle 0.5s;
+        animation-iteration-count: infinite;
+    }
+
+        .frontAnim:hover {
+            cursor: pointer;
+            filter: brightness(0.85);
+        }
+
+    .accountData {
+        position: absolute;
+        left: 10px;
+        bottom: 10px;
+        color: whitesmoke;
+        font-size: 12px;
+    }
+</style>
+<div class="accountData">@Name - @Role</div>
+
+<div class="adminControl">
+    <h3 class="text-center">Admin Area</h3>
+    <NavLink class="btn btn-primary crudButton" href="/addchampion">Add</NavLink>
+
+</div>
+
+@if (Champions == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+
+    <div class="adminGrid">
+        @foreach (var champion in Champions)
+        {
+            <div id="@champion.Name" class="adminBox" data-champid="@champion.Name">
+                <img class="frontAdmin" src="@champion.ImageUrl" />
+                <div class="backAdmin">
+                    <a class="btn btn-primary crudHalfButton" href='/editchampion/@champion.Id'><span class="oi oi-pencil" b-mnvq4v7bjx></span></a>
+                    <a class="btn btn-primary crudHalfButton" href='/deletechampion/@champion.Id'><span class="oi oi-trash" b-mnvq4v7bjx></span></a>
+                </div>
+            </div>
+
+        }
+    </div>
+
+}
+
+@code {
+    Champion[] Champions;
+    protected Task<AuthenticationState?> AuthState;
+    protected ClaimsPrincipal? User;
+    protected string? Name;
+    protected string? Role;
+
+    public void LoadChampions()
+    {
+        Champions = Db.Champions.Include(t => t.Head).ToArray();
+    }
+
+    public void LoadUser()
+    {
+        AuthState = GetAuthenticationStateAsync.GetAuthenticationStateAsync()!;
+        User = AuthState.Result?.User;
+        Name = User?.Identity?.Name;
+    }
+
+    public void SetRole()
+    {
+        Role = User.HasClaim(ClaimTypes.Role, "Admin") ? "Admin" : "User";
+    }
+    protected override void OnInitialized()
+    {
+        LoadChampions();
+        LoadUser();
+        SetRole();
+
+    }
+
+}

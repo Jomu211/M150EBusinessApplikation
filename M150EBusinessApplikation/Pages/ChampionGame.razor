@@ -1,0 +1,922 @@
+﻿@page "/championgame"
+@using System.Security.Claims
+@using BootstrapBlazor.Components;
+@using M150EBusinessApplikation.Data;
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.EntityFrameworkCore
+
+@inject ProtectedLocalStorage ProtectedLocalStorageStore
+@inject IJSRuntime JsRuntime
+@attribute [Authorize(Roles = "Admin, User")]
+@inject ApplicationDbContext Db
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject DialogService DialogService
+
+<style>
+
+    .gameGrid {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        justify-content: center;
+        align-items: flex-start;
+        margin: 10px 55px 10px 55px;
+    }
+
+    .championBox {
+        box-shadow: #333 1px 0 10px;
+        border-radius: 10px;
+        margin: 8px;
+        width: calc((4vw + 5.25vh) / 2);
+        height: calc((4vw + 5.25vh) / 2);
+        overflow: hidden;
+        -webkit-transition: 0.6s;
+        -webkit-transform-style: preserve-3d;
+        -moz-transition: 0.6s;
+        -moz-transform-style: preserve-3d;
+        -o-transition: 0.6s;
+        -o-transform-style: preserve-3d;
+        transition: 0.6s;
+        transform-style: preserve-3d;
+        position: relative;
+        -webkit-perspective: 1000;
+        -moz-perspective: 1000;
+        -o-perspective: 1000;
+        perspective: 1000;
+    }
+
+
+        .championBox:has(.back):hover {
+            cursor: pointer;
+        }
+
+        .championBox:has(.backIsActive):hover {
+            cursor: default;
+            filter: none;
+        }
+
+        .championBox:has(.backIsActive) > .back {
+            opacity: 0.55;
+            background-color: transparent;
+        }
+
+    .front {
+        z-index: 2;
+    }
+
+        .front:hover {
+            filter: brightness(0.7) !important;
+        }
+
+        .front:active {
+            filter: brightness(0.55) !important;
+        }
+
+    .clickableFront {
+        cursor: pointer;
+    }
+
+    .back, .front {
+        width: 115%;
+        height: 115%;
+        object-fit: cover;
+        box-shadow: #333 1px 0 10px;
+        position: relative;
+        top: -7.5%;
+        left: -7.5%;
+        position: absolute;
+    }
+
+    .front, .back {
+        -webkit-transition: all 0.3s ease-in-out;
+        -moz-transition: all 0.3s ease-in-out;
+        -o-transition: all 0.3s ease-in-out;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .guessingButton {
+        z-index: 100;
+        display: none;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+        .guessingButton:hover {
+            filter: brightness(0.7) !important;
+        }
+
+        .guessingButton:active {
+            filter: brightness(0.55) !important;
+        }
+
+
+    h3.text-center {
+        font-size: 55px;
+    }
+
+    h3.titleFont {
+        font-size: 150px;
+        text-align: center;
+    }
+
+    div.gameControl {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin: 20px 20px 0px 20px;
+    }
+
+    div.startGameContainer {
+        display: flex;
+        flex-direction: column;
+        margin: 15vw 0px 0px 0px;
+        align-items: center;
+    }
+
+
+
+    .parent {
+        display: block;
+        position: relative;
+        float: left;
+        background: rgba(0,0,0,0.5);
+        border: 0px solid whitesmoke;
+        font-size: 30px;
+        color: whitesmoke;
+        font-family: 'Poppins', sans-serif;
+        padding: 5px;
+        z-index: 1000;
+        cursor: pointer;
+    }
+
+        .parent a {
+            margin: 10px;
+            color: whitesmoke;
+            text-decoration: none;
+        }
+
+        .parent:hover > ul {
+            display: block;
+            position: absolute;
+        }
+
+    .child {
+        display: none;
+    }
+
+        .child li {
+            background: rgba(0,0,0,0.5);
+            border: 0px solid whitesmoke;
+            font-size: 30px;
+            color: whitesmoke;
+            font-family: 'Poppins', sans-serif;
+            padding: 5px;
+            padding-left: 15px;
+            width: 80%;
+            z-index: 1000;
+            cursor: pointer;
+            margin-left: -1px;
+        }
+
+            .child li a {
+                color: whitesmoke;
+            }
+
+    ul {
+        list-style: none;
+        margin: 0;
+        padding: 0px;
+        min-width: 10em;
+    }
+
+        ul ul ul {
+            left: 100%;
+            top: 0;
+            margin-left: 1px;
+        }
+
+    li:hover {
+        background-color: rgba(0, 0, 0, 0.8);
+        color: whitesmoke;
+        box-shadow: 0 0 10px #333;
+    }
+
+    .parent li:hover {
+        background-color: rgba(0, 0, 0, 0.8);
+        color: whitesmoke;
+        box-shadow: 0 0 10px #333;
+    }
+
+    .expand {
+        font-size: 12px;
+        float: right;
+        margin-right: 5px;
+    }
+
+
+
+
+    .frontAnim {
+        animation: wiggle 0.5s;
+        animation-iteration-count: infinite;
+        filter: brightness(0.7) !important;
+    }
+
+        .frontAnim .front {
+            filter: brightness(0.7) !important;
+        }
+
+        .frontAnim:hover {
+            cursor: pointer;
+            filter: brightness(0.85);
+        }
+
+    @@keyframes wiggle {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        25% {
+            transform: rotate(5deg);
+        }
+
+        50% {
+            transform: rotate(0eg);
+        }
+
+        75% {
+            transform: rotate(-5deg);
+        }
+
+        100% {
+            transform: rotate(0deg);
+        }
+    }
+
+    .ui-dialog {
+        z-index: 99999 !important;
+    }
+
+    body .ui-dialog .ui-dialog-titlebar {
+        background: #fafafa;
+        border: none;
+        border-bottom: 1px solid #d9d9d9;
+        font-family: 'poppins', sans-serif;
+        font-size: 20px;
+        padding: 12px;
+        padding-left: 20px;
+    }
+
+    body .ui-dialog .ui-dialog-content {
+        padding: 20px;
+    }
+
+    body .ui-widget.ui-widget-content {
+        border-radius: 5px;
+        background: #fafafa;
+        border: none;
+        box-shadow: rgb(0 0 0 / 15%) 0px 2px 8px;
+    }
+
+    div button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close {
+        background-color: transparent;
+        border: none;
+        color: var(--fontBlack);
+        right: 20px;
+        outline: none;
+    }
+
+    .accountData {
+        position: absolute;
+        left: 10px;
+        bottom: 10px;
+        color: whitesmoke;
+        font-size: 12px;
+    }
+
+    .InfoContainer {
+        align-self: start;
+        text-align: right !important;
+        min-width: 250px;
+    }
+
+
+
+    li.last-attribute {
+        color: green !important;
+        pointer-events: none !important;
+        cursor: pointer;
+    }
+
+    div.outterContainer {
+        display: none;
+        visibility: hidden;
+    }
+
+    div.information {
+        width: 55px;
+        height: 55px;
+        display: inline-block;
+    }
+
+    .infoIcon {
+        text-align: right;
+        padding-top: 8px;
+        padding-right: 2px;
+        text-shadow: #333 1px 0 10px;
+    }
+
+    .tryCounter {
+        text-align: right !important;
+    }
+</style>
+
+@{
+    var filteredChampions = Champions
+    .Where(c => Db.UserGameChampions
+        .Any(u => u.ChampionId == c.Id && u.Username == Name && !u.Hidden /*&& u.Bought*/))
+    .ToList();
+
+    var genders = GetGroupedAttributes(filteredChampions, t => t.Gender);
+    var regions = GetGroupedAttributes(filteredChampions, t => t.Region);
+    var haircolors = GetGroupedAttributes(filteredChampions, t => t.Head.Haircolor);
+    var headgears = GetGroupedAttributes(filteredChampions, t => t.Head.Headgear);
+    var others = GetGroupedAttributes(filteredChampions, t => t.Head.Other);
+    var styles = GetGroupedAttributes(filteredChampions, t => t.CombatStyle);
+    var resources = GetGroupedAttributes(filteredChampions, t => t.Resource);
+
+    #region AttributeDropDownMethods
+    void GetAttributes(List<IGrouping<string?, Champion>>? list, string prop)
+    {
+        if (list == null) return;
+        bool isSingleAttribute = list.Count == 1;
+
+        foreach (var grouping in list)
+        {
+            if (grouping.Key == null) continue;
+
+            var chosenVal = CheckChosenChampionAttribute(prop);
+            bool isChosen = chosenVal == grouping.Key;
+
+            string cssClass = GetCssClass(isSingleAttribute, isChosen);
+            if (isSingleAttribute && isChosen)
+            {
+                AddCursorDefault(grouping.Key);
+            }
+
+            RenderAttributeListItem(cssClass, grouping.Key, prop);
+        }
+    }
+    string GetCssClass(bool isSingle, bool chosen)
+    {
+        if (isSingle && chosen)
+        {
+            return "last-attribute";
+        }
+        return string.Empty;
+    }
+
+    void AddCursorDefault(string key)
+    {
+        JsRuntime.InvokeVoidAsync("addCursorDefault", key);
+    }
+
+    void RenderAttributeListItem(string cssClass, string key, string prop)
+    {
+        <li class="@cssClass" @onclick="() => SearchAttribute(key, prop)">@key</li>
+    }
+
+    List<IGrouping<string?, TItem>> GetGroupedAttributes<TItem>(
+        IEnumerable<TItem> items, Func<TItem, string?> propertySelector)
+    {
+        return items
+            .GroupBy(propertySelector)
+            .Where(g => g.Key != null)
+            .ToList();
+    }
+    #endregion
+}
+
+<div class="startGameContainer">
+    <h3 class="text-center titleFont">Who am I?</h3>
+
+    <a class="btn btn-primary" @onclick="StartGame"><i class="fa-solid fa-fw fa-play" style="color: whitesmoke;"></i> Play </a>
+</div>
+
+<div class="accountData">@Name - @Role</div>
+
+<div class="outterContainer">
+    <div class="gameControl">
+        <div style="margin-left:10px;">
+            <h3 class="text-center resultOutput">Who am I?</h3>
+            <ul id="menu">
+                <li class="parent">
+                    <div style="padding-left: 7px;">Features<i class="fa-solid fa-fw fa-chevron-right" style="color: whitesmoke;"></i></div>
+                    <ul class="child" style="margin-top: 5px;margin-left: -4px;">
+                        <li class="parent">
+
+                            <div>Gender <span class="expand">></span></div>
+                            <ul class="child">
+                                @{
+                                    GetAttributes(genders, "Gender");
+                                }
+                            </ul>
+                        </li>
+                        <li class="parent">
+                            <div>Region <span class="expand">></span></div>
+                            <ul class="child">
+                                @{
+                                    GetAttributes(regions, "Region");
+                                }
+                            </ul>
+                        </li>
+                        <li class="parent">
+                            <div>Head <span class="expand">></span></div>
+                            <ul class="child">
+                                <li class="parent">
+                                    <div>Hair color <span class="expand">></span></div>
+                                    <ul class="child">
+                                        @{
+                                            GetAttributes(haircolors, "Haircolor");
+                                        }
+                                    </ul>
+                                </li>
+                                <li class="parent">
+                                    <div>Headgear <span class="expand">></span></div>
+                                    <ul class="child">
+                                        @{
+                                            GetAttributes(headgears, "Headgear");
+                                        }
+                                    </ul>
+                                </li>
+                                <li class="parent">
+                                    <div>Other <span class="expand">></span></div>
+                                    <ul class="child">
+                                        @{
+                                            GetAttributes(others, "Other");
+                                        }
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="parent">
+                            <div>CombatStyle <span class="expand">></span></div>
+                            <ul class="child">
+                                @{
+                                    GetAttributes(styles, "CombatStyle");
+                                }
+                            </ul>
+                        </li>
+                        <li class="parent">
+                            <div>Resource <span class="expand">></span></div>
+                            <ul class="child">
+                                @{
+                                    GetAttributes(resources, "Resource");
+                                }
+                            </ul>
+                        </li>
+
+
+                    </ul>
+                </li>
+            </ul>
+
+        </div>
+
+        <div class="InfoContainer">
+            <h3 class="text-center tryCounter">Tries: @TryCount</h3>
+            <div class="information" title="Take a guess at the random champion using the Features-Dropdown. The title will turn green or red to indicate if your selected feature was correct. If the feature is incorrect, it will be removed from the dropdown. Additionally, you have the option to click on a champion for a random guess, and confirm your selection with a second click."><i class="fa-solid fa-circle-info fa-2x infoIcon"></i></div>
+
+        </div>
+
+
+
+    </div>
+
+    <div class="gameGrid">
+        @foreach (var champion in Champions)
+        {
+
+            <div id="@champion.Name" class="championBox" data-champid="@champion.Name">
+                <img class="front" src="@champion.ImageUrl" />
+                <img class="back" src="images/backSide.png">
+                <img class="guessingButton" @onclick="() => GuessChampion(champion)" src="images/question.png" />
+            </div>
+        }
+    </div>
+</div>
+
+
+
+
+@code {
+    #region Variables
+    protected List<Champion> Champions = null!;
+    protected Task<AuthenticationState> AuthState = null!;
+    protected ClaimsPrincipal? User;
+    protected string? Name;
+    protected string? Role;
+    protected int TryCount;
+    protected UserProfil UserProfil;
+    #endregion
+
+
+    #region Initializing
+    protected override void OnInitialized()
+    {
+        LoadChampions();
+        LoadUser();
+        SetRole();
+        InitializeUserGameChampions();
+        InitializeUserProfil();
+    }
+    public void LoadChampions()
+    {
+        Champions = Db.Champions.Include(t => t.Head).ToList();
+    }
+    public void LoadUser()
+    {
+        AuthState = GetAuthenticationStateAsync.GetAuthenticationStateAsync()!;
+        User = AuthState.Result?.User;
+        Name = User?.Identity?.Name;
+    }
+
+    public void SetRole()
+    {
+        Role = User.HasClaim(ClaimTypes.Role, "Admin") ? "Admin" : "User";
+    }
+
+    private void InitializeUserGameChampions()
+    {
+        foreach (var champ in Champions)
+        {
+            var userChamp = Db.UserGameChampions.FirstOrDefault(t => t.ChampionId == champ.Id && t.Username == Name);
+            if (userChamp == null)
+            {
+                if (Name != null) Db.UserGameChampions.Add(new UserGameChampion { ChampionId = champ.Id, Username = Name, Hidden = false });
+                Db.SaveChanges();
+            }
+        }
+    }
+
+    private void InitializeUserProfil()
+    {
+        UserProfil = Db.UserProfiles.FirstOrDefault(u => u.Username == Name);
+
+        if (UserProfil == null)
+        {
+            Db.UserProfiles.Add(new Data.UserProfil()
+                {
+                    Username = Name,
+                    Coins = 0,
+                    Tries = null
+
+                });
+            Db.SaveChanges();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await ProtectedLocalStorageStore.GetAsync<string>("TryCount");
+        TryCount = result.Success && int.TryParse(result.Value, out int count) ? count : 0;
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var hiddenChampIds = Db.UserGameChampions
+                .Where(x => x.Username == Name && x.Hidden)
+                .Select(x => x.ChampionId)
+                .ToList();
+
+            var hiddenChamps = Champions
+                .Where(champ => hiddenChampIds.Contains(champ.Id))
+                .Select(champ => champ.Name)
+                .ToList();
+
+            foreach (var champName in hiddenChamps)
+            {
+                JsRuntime.InvokeVoidAsync("flipAnim", champName);
+            }
+        }
+
+    }
+    #endregion
+
+    #region Counter
+    private async Task IncreaseAndSaveCount()
+    {
+        TryCount++;
+        await ProtectedLocalStorageStore.SetAsync("TryCount", TryCount.ToString());
+    }
+    private async Task ClearCount()
+    {
+        await ProtectedLocalStorageStore.DeleteAsync("TryCount");
+        TryCount = 0;
+    }
+
+    private async Task AddCoinsToAccount()
+    {
+        //Add props for popup etc.
+        if (UserProfil != null)
+        {
+            if (TryCount > 25)
+            {
+                UserProfil.Coins += 0;
+            }
+            else
+            {
+                UserProfil.Coins += 25 - TryCount;
+
+            }
+        }
+
+    }
+
+    private async Task<int?> GetCoins()
+    {
+        if (UserProfil != null)
+        {
+            return UserProfil.Coins;
+        }
+        return null;
+
+    }
+    #endregion
+
+    #region Champion
+    private Champion? GetSelectedChampion()
+    {
+        bool hasChosenChampion = Db.UserGameChampions.Any(t => t.Chosen && t.Username == Name);
+
+        if (hasChosenChampion)
+        {
+            return GetChosenChampion();
+        }
+        else
+        {
+            return GetRandomChampion();
+        }
+    }
+
+    private Champion GetChosenChampion()
+    {
+        int? chosenChampId = Db.UserGameChampions
+            .FirstOrDefault(t => t.Chosen && t.Username == Name)?.ChampionId;
+
+        return Champions.FirstOrDefault(x => x.Id == chosenChampId)!;
+    }
+
+    private Champion? GetRandomChampion()
+    {
+        int randomIndex = new Random().Next(0, Champions.Count);
+        var chosenChamp = Db.UserGameChampions
+            .FirstOrDefault(x => x.ChampionId == randomIndex && x.Username == Name);
+
+        if (chosenChamp != null)
+        {
+            chosenChamp.Chosen = true;
+            Db.Entry(chosenChamp).State = EntityState.Modified;
+            Db.SaveChanges();
+
+            return Champions.FirstOrDefault(x => x.Id == chosenChamp.ChampionId)!;
+        }
+
+        return null;
+    }
+
+
+    private async Task SearchAttribute(string key, string column)
+    {
+        string? chosenValue = CheckChosenChampionAttribute(column);
+        await FlipChampions(chosenValue, key, column);
+        await IncreaseAndSaveCount();
+    }
+    private string? CheckChosenChampionAttribute(string column)
+    {
+        var chosenChampion = GetSelectedChampion();
+        if (chosenChampion == null)
+        {
+            JsRuntime.InvokeVoidAsync("alert", "Something went wrong, try again later");
+            return null;
+        }
+        var chosenCol = chosenChampion.GetType().GetProperty(column);
+        if (chosenCol == null)
+        {
+            chosenCol = chosenChampion.Head.GetType().GetProperty(column);
+            if (chosenCol == null)
+            {
+                return null;
+            }
+            if (chosenChampion.Head.GetType().GetProperty(column)?.GetValue(chosenChampion.Head, null) != null)
+                return chosenCol.GetValue(chosenChampion.Head)?.ToString();
+        }
+        else
+        {
+            return chosenCol.GetValue(chosenChampion)?.ToString();
+        }
+        return null;
+    }
+    private async Task FlipChampions(string? chosenValue, string key, string column)
+    {
+        if (chosenValue != key)
+        {
+            await JsRuntime.InvokeVoidAsync("resultOutput", false);
+
+            foreach (var champ in Champions)
+            {
+                var userChamp = Db.UserGameChampions.FirstOrDefault(x => x.ChampionId == champ.Id && x.Username == Name && x.Hidden == false && x.Chosen == false);
+
+                if (userChamp != null)
+                {
+
+                    var value = userChamp.Champion.GetType().GetProperty(column)?.GetValue(userChamp.Champion, null) ?? userChamp.Champion.Head.GetType().GetProperty(column)?.GetValue(userChamp.Champion.Head, null);
+                    if (value?.ToString() == key)
+                    {
+                        await JsRuntime.InvokeVoidAsync("flipClickable", champ.Name);
+
+                        HideChampion(userChamp);
+                    }
+                }
+            }
+        }
+        else
+        {
+            await JsRuntime.InvokeVoidAsync("resultOutput", true);
+
+            foreach (var champ in Champions)
+            {
+                var userChamp = Db.UserGameChampions.FirstOrDefault(x => x.ChampionId == champ.Id && x.Username == Name && x.Hidden == false && x.Chosen == false);
+
+                if (userChamp != null)
+                {
+
+                    var value = userChamp.Champion.GetType().GetProperty(column)?.GetValue(userChamp.Champion, null);
+                    if (value == null)
+                        value = userChamp.Champion.Head.GetType().GetProperty(column)?.GetValue(userChamp.Champion.Head, null);
+
+
+                    if (value?.ToString() != key)
+                    {
+                        await JsRuntime.InvokeVoidAsync("flipClickable", champ.Name);
+
+                        HideChampion(userChamp);
+                    }
+
+                }
+            }
+
+        }
+    }
+    private void HideChampion(UserGameChampion userChamp)
+    {
+        if (userChamp.Hidden == false)
+        {
+            userChamp.Hidden = true;
+            Db.Entry(userChamp).State = EntityState.Modified;
+            Db.SaveChanges();
+        }
+
+    }
+    private async Task GuessChampion(Champion champion)
+    {
+        GetSelectedChampion();
+        var userChamp = Db.UserGameChampions.FirstOrDefault(x => x.ChampionId == champion.Id && x.Username == Name);
+        if (userChamp is { Chosen: true })
+        {
+            AddScoreToLeaderboard();
+            await OpenFinishDialog(userChamp.Champion);
+            await ClearCount();
+            await RestartGame();
+        }
+        else
+        {
+            await JsRuntime.InvokeVoidAsync("flipAnim", userChamp?.Champion.Name);
+            await IncreaseAndSaveCount();
+            if (userChamp != null) HideChampion(userChamp);
+        }
+    }
+
+
+    //private void SortChampions()
+    //{
+    //    Champions = Db.Champions.Include(t => t.Head).OrderBy(t => t.Gender).ToList();
+    //    StateHasChanged();
+
+    //}
+    #endregion
+
+    #region StartEnd
+    private async Task StartGame()
+    {
+        await JsRuntime.InvokeVoidAsync("startGame");
+    }
+    private async Task RestartGame()
+    {
+        foreach (var champ in Champions)
+        {
+            var userChamp = Db.UserGameChampions.FirstOrDefault(x => x.ChampionId == champ.Id && x.Username == Name);
+            if (userChamp != null)
+            {
+                userChamp.Hidden = false;
+                userChamp.Chosen = false;
+                Db.Entry(userChamp).State = EntityState.Modified;
+            }
+        }
+        await Db.SaveChangesAsync();
+        await JsRuntime.InvokeVoidAsync("flipAll");
+        await JsRuntime.InvokeVoidAsync("resultOutput", null);
+
+
+    }
+    private async Task OpenFinishDialog(Champion champion)
+    {
+        //    var tries = (TryCount + 1 > 1) ? "tries" : "try";
+
+        //    var option = new DialogOption
+        //        {
+        //            Title = $"{champion.Name} found after {TryCount + 1} {tries}",
+        //            ShowCloseButton = false,
+        //            ShowFooter = false,
+        //            IsDraggable = true,
+        //            Class = "dialog",
+        //            BodyContext = new RenderFragment(builder =>
+        //            {
+        //                builder.OpenElement(0, "img");
+        //                builder.AddAttribute(1, "class", "championImageInDialog");
+        //                builder.AddAttribute(1, "src", $"/images/icons/{champion.Name}.png");
+        //                builder.CloseElement();
+
+        //                //builder.OpenElement(2, "div");
+        //                //builder.AddContent(2, "+ 10 coins");
+        //                //builder.CloseElement();
+        //            })
+        //        };
+
+        //    option.Component = BootstrapDynamicComponent.CreateComponent<Button>
+        //(new Dictionary<string, object?>
+        //    {
+        //        [nameof(Button.Text)] = "Play again",
+        //        [nameof(Button.OnClick)] = EventCallback.Factory.Create<MouseEventArgs>
+        //                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            (this, option.CloseDialogAsync)
+        //    });
+
+        //    await DialogService.Show(option);
+
+        var tries = (TryCount + 1 > 1) ? "tries" : "try";
+
+        var option = new DialogOption
+            {
+                Title = $"{champion.Name} found after {TryCount + 1} {tries}",
+                ShowCloseButton = false,
+                ShowFooter = true,  // Show the footer
+                IsDraggable = true,
+                Class = "dialog",
+                BodyContext = new RenderFragment(builder =>
+                {
+                    builder.OpenElement(0, "img");
+                    builder.AddAttribute(1, "class", "championImageInDialog");
+                    builder.AddAttribute(2, "src", $"/images/icons/{champion.Name}.png");
+                    builder.CloseElement();
+                })
+            }; //https://docs.blazorbootstrap.com/components/modal
+
+        option.Component = BootstrapDynamicComponent.CreateComponent<Button>(
+            new Dictionary<string, object?>
+                {
+                    [nameof(Button.Text)] = "Play again",
+                    [nameof(Button.OnClick)] = EventCallback.Factory.Create<MouseEventArgs>(this, option.CloseDialogAsync)
+                });
+
+        await DialogService.Show(option);
+    }
+    private void AddScoreToLeaderboard()
+    {
+        var leaderboard = Db.UserProfiles.FirstOrDefault(x => x.Username == Name);
+        if (leaderboard != null)
+        {
+            if (leaderboard.Tries > TryCount + 1)
+            {
+                leaderboard.Tries = TryCount + 1;
+                Db.Entry(leaderboard).State = EntityState.Modified;
+                Db.SaveChanges();
+            }
+        }
+        else
+        {
+            Db.UserProfiles.Add(new Data.UserProfil()
+                {
+                    Username = Name,
+                    Coins = 0,
+                    Tries = TryCount + 1
+                });
+            Db.SaveChanges();
+        }
+    }
+    #endregion
+}

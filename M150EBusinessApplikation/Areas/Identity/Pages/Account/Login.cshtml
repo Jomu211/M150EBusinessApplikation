@@ -1,0 +1,35 @@
+﻿@page
+@model LoginModel
+<h3 class="text-center loginContainer">Login</h3>
+<div class="flexContainer">
+    <div class="innerLoginContainer">
+        <div class="loginContainer">
+
+            <form id="account" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                <input asp-for="Input.Email" class="form-control loginInput" autocomplete="Username" aria-required="true" placeholder="name@example.com" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+
+                <input asp-for="Input.Password" class="form-control loginInput" autocomplete="current-password" aria-required="true" placeholder="Password" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+
+                <input asp-for="Input.RememberMe" class="form-check rememberMe" />
+                <label asp-for="Input.RememberMe" class="form-check-label loginInput rememberMe">Remember me?</label>
+                <span asp-validation-for="Input.RememberMe" class="text-danger" style="clear:both;"></span>
+
+
+                <div>
+                    <button type="button" onclick="history.go(-1);" class="ml-md-auto btn btn-primary">Back</button>
+
+                    <button id="login-submit" type="submit" class="ml-md-auto btn btn-primary" style="float:right;">Log in</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

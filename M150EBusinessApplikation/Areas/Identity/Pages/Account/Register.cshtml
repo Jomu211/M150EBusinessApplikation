@@ -1,0 +1,35 @@
+﻿@page
+@model RegisterModel
+
+<h3 class="text-center loginContainer">Register</h3>
+<div class="flexContainer">
+    <div class="innerLoginContainer">
+        <div class="loginContainer">
+
+            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+                <input asp-for="Input.Email" class="form-control loginInput" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+
+                <input asp-for="Input.Password" class="form-control loginInput" autocomplete="new-password" aria-required="true" placeholder="Password" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+
+                <input asp-for="Input.ConfirmPassword" class="form-control loginInput" autocomplete="new-password" aria-required="true" placeholder="Password" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                <div>
+                    <button type="button" onclick="history.go(-1);" class="ml-md-auto btn btn-primary">Back</button>
+
+                    <button id="registerSubmit" type="submit" class="ml-md-auto btn btn-primary" style="float:right;">Register</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
