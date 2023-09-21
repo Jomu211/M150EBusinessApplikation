@@ -21,7 +21,8 @@ namespace M150EBusinessApplikation.Data.Migrations
                     Region = table.Column<string>(type: "nvarchar(25)", maxLength: 25, nullable: false),
                     Gender = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
                     CombatStyle = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
-                    Resource = table.Column<string>(type: "nvarchar(25)", maxLength: 25, nullable: false)
+                    Resource = table.Column<string>(type: "nvarchar(25)", maxLength: 25, nullable: false),
+                    Price = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -29,17 +30,18 @@ namespace M150EBusinessApplikation.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Leaderboards",
+                name: "UserProfiles",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Username = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Tries = table.Column<int>(type: "int", nullable: false)
+                    Tries = table.Column<int>(type: "int", nullable: true),
+                    Coins = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Leaderboards", x => x.Id);
+                    table.PrimaryKey("PK_UserProfiles", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -72,6 +74,7 @@ namespace M150EBusinessApplikation.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Hidden = table.Column<bool>(type: "bit", nullable: false),
                     Chosen = table.Column<bool>(type: "bit", nullable: false),
+                    Bought = table.Column<bool>(type: "bit", nullable: false),
                     ChampionId = table.Column<int>(type: "int", nullable: false),
                     Username = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
@@ -105,7 +108,7 @@ namespace M150EBusinessApplikation.Data.Migrations
                 name: "Heads");
 
             migrationBuilder.DropTable(
-                name: "Leaderboards");
+                name: "UserProfiles");
 
             migrationBuilder.DropTable(
                 name: "UserGameChampions");
