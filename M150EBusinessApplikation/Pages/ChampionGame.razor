@@ -333,6 +333,34 @@
     .tryCounter {
         text-align: right !important;
     }
+
+    .modalText {
+        display: inline;
+        margin: 25px;
+        font-size: 20px;
+        font-family: 'Poppins', sans-serif;
+        text-shadow: #333 1px 0 5px;
+        color: whitesmoke;
+    }
+
+    .championImageInDialog {
+        border-radius: 5px;
+    }
+
+    .modal-title {
+        font-size: 30px;
+        font-family: 'Poppins', sans-serif;
+        text-shadow: #333 1px 0 5px;
+        color: whitesmoke;
+    }
+
+    .modal-content {
+        background-color: #36393f;
+    }
+
+    .modal-footer {
+        justify-content: space-between;
+    }
 </style>
 
 @{
@@ -510,18 +538,18 @@
     </div>
 </div>
 
-
-
-
 @code {
     #region Variables
+
     protected List<Champion> Champions = null!;
     protected Task<AuthenticationState> AuthState = null!;
     protected ClaimsPrincipal? User;
+    protected UserProfil UserProfil = null!;
+
     protected string? Name;
     protected string? Role;
     protected int TryCount;
-    protected UserProfil UserProfil;
+    protected int? AddedCoins;
     #endregion
 
 
@@ -622,29 +650,21 @@
 
     private async Task AddCoinsToAccount()
     {
-        //Add props for popup etc.
+
         if (UserProfil != null)
         {
             if (TryCount > 25)
             {
-                UserProfil.Coins += 0;
+                AddedCoins = 0;
+                UserProfil.Coins += AddedCoins;
             }
             else
             {
-                UserProfil.Coins += 25 - TryCount;
+                AddedCoins = 25 - TryCount;
+                UserProfil.Coins += AddedCoins;
 
             }
         }
-
-    }
-
-    private async Task<int?> GetCoins()
-    {
-        if (UserProfil != null)
-        {
-            return UserProfil.Coins;
-        }
-        return null;
 
     }
     #endregion
@@ -790,6 +810,7 @@
         if (userChamp is { Chosen: true })
         {
             AddScoreToLeaderboard();
+            await AddCoinsToAccount();
             await OpenFinishDialog(userChamp.Champion);
             await ClearCount();
             await RestartGame();
@@ -801,14 +822,6 @@
             if (userChamp != null) HideChampion(userChamp);
         }
     }
-
-
-    //private void SortChampions()
-    //{
-    //    Champions = Db.Champions.Include(t => t.Head).OrderBy(t => t.Gender).ToList();
-    //    StateHasChanged();
-
-    //}
     #endregion
 
     #region StartEnd
@@ -834,73 +847,67 @@
 
 
     }
+
     private async Task OpenFinishDialog(Champion champion)
     {
-        //    var tries = (TryCount + 1 > 1) ? "tries" : "try";
+        var tryText = (TryCount + 1 > 1) ? "tries" : "try";
+        var coinText = (AddedCoins + 1 > 1) ? "coins" : "coin";
 
-        //    var option = new DialogOption
-        //        {
-        //            Title = $"{champion.Name} found after {TryCount + 1} {tries}",
-        //            ShowCloseButton = false,
-        //            ShowFooter = false,
-        //            IsDraggable = true,
-        //            Class = "dialog",
-        //            BodyContext = new RenderFragment(builder =>
-        //            {
-        //                builder.OpenElement(0, "img");
-        //                builder.AddAttribute(1, "class", "championImageInDialog");
-        //                builder.AddAttribute(1, "src", $"/images/icons/{champion.Name}.png");
-        //                builder.CloseElement();
-
-        //                //builder.OpenElement(2, "div");
-        //                //builder.AddContent(2, "+ 10 coins");
-        //                //builder.CloseElement();
-        //            })
-        //        };
-
-        //    option.Component = BootstrapDynamicComponent.CreateComponent<Button>
-        //(new Dictionary<string, object?>
-        //    {
-        //        [nameof(Button.Text)] = "Play again",
-        //        [nameof(Button.OnClick)] = EventCallback.Factory.Create<MouseEventArgs>
-        //                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            (this, option.CloseDialogAsync)
-        //    });
-
-        //    await DialogService.Show(option);
-
-        var tries = (TryCount + 1 > 1) ? "tries" : "try";
-
-        var option = new DialogOption
+        DialogOption option = null;
+        option = new DialogOption
             {
-                Title = $"{champion.Name} found after {TryCount + 1} {tries}",
+                Title = "Champion Found",
                 ShowCloseButton = false,
-                ShowFooter = true,  // Show the footer
+                ShowFooter = true,
                 IsDraggable = true,
                 Class = "dialog",
-                BodyContext = new RenderFragment(builder =>
+                BodyTemplate = new RenderFragment(builder =>
                 {
-                    builder.OpenElement(0, "img");
-                    builder.AddAttribute(1, "class", "championImageInDialog");
-                    builder.AddAttribute(2, "src", $"/images/icons/{champion.Name}.png");
-                    builder.CloseElement();
-                })
-            }; //https://docs.blazorbootstrap.com/components/modal
+                    builder.OpenElement(0, "div");
+                    builder.AddAttribute(1, "class", "dialog-body");
 
-        option.Component = BootstrapDynamicComponent.CreateComponent<Button>(
-            new Dictionary<string, object?>
+                    builder.OpenElement(2, "img");
+                    builder.AddAttribute(3, "class", "championImageInDialog");
+                    builder.AddAttribute(4, "src", $"/images/icons/{champion.Name}.png");
+                    builder.CloseElement();
+
+                    builder.OpenElement(5, "div");
+                    builder.AddAttribute(6, "class", "modalText");
+                    builder.AddContent(7, $"{champion.Name} found after {TryCount + 1} {tryText}");
+                    builder.CloseElement();
+
+                    builder.CloseElement();
+                }),
+                FooterTemplate = new RenderFragment(builder =>
                 {
-                    [nameof(Button.Text)] = "Play again",
-                    [nameof(Button.OnClick)] = EventCallback.Factory.Create<MouseEventArgs>(this, option.CloseDialogAsync)
-                });
+                    builder.OpenElement(5, "div");
+                    builder.AddAttribute(6, "class", "modalText");
+                    builder.AddContent(7, $"+{AddedCoins} {coinText}");
+
+                    builder.CloseElement();
+
+                    builder.OpenElement(0, "button");
+                    builder.AddAttribute(1, "class", "btn btn-primary playAgainButton");
+                    builder.AddAttribute(2, "onclick", EventCallback.Factory.Create(this, () => HandleButtonClick(option)));
+                    builder.AddContent(3, "Play again");
+                    builder.CloseElement();
+                }),
+            };
 
         await DialogService.Show(option);
     }
+
+    private async Task HandleButtonClick(DialogOption option)
+    {
+        await option.CloseDialogAsync();
+    }
+
     private void AddScoreToLeaderboard()
     {
         var leaderboard = Db.UserProfiles.FirstOrDefault(x => x.Username == Name);
         if (leaderboard != null)
         {
-            if (leaderboard.Tries > TryCount + 1)
+            if (leaderboard.Tries > TryCount + 1 || leaderboard.Tries == null)
             {
                 leaderboard.Tries = TryCount + 1;
                 Db.Entry(leaderboard).State = EntityState.Modified;

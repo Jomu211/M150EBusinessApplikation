@@ -28,7 +28,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in LeaderboardList.OrderBy(t => t.Tries).Take(5))
+            @foreach (var item in LeaderboardList.OrderBy(t => t.Tries).Where(t => t.Tries != null).Take(10))
             {
                 <tr>
                     <td class="text-center">@item.Username</td>
@@ -63,7 +63,7 @@
         var lead = Db.UserProfiles.FirstOrDefault(t => t.Id == id);
         if (lead != null)
         {
-            Db.UserProfiles.Remove(lead);
+            lead.Tries = null;
             Db.SaveChanges();
             LoadLeaderboard();
         }

@@ -11,70 +11,65 @@
 @inject ApplicationDbContext Db
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
 @inject DialogService DialogService
+<style>
+    .coinText {
+        align-self: start;
+        text-align: right !important;
+        min-width: 250px;
+    }
 
-@{
-    
+    div.gameControl {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin: 20px 20px 0px 20px;
+    }
+</style>
+@code {
+    protected ClaimsPrincipal? User;
+    protected UserProfil UserProfil = null!;
+    protected Task<AuthenticationState> AuthState = null!;
+    protected string? Name;
+
+
+    public void LoadUser()
+    {
+        AuthState = GetAuthenticationStateAsync.GetAuthenticationStateAsync()!;
+        User = AuthState.Result?.User;
+        Name = User?.Identity?.Name;
+    }
+
+    private void InitializeUserProfil()
+    {
+        UserProfil = Db.UserProfiles.FirstOrDefault(u => u.Username == Name);
+
+        if (UserProfil == null)
+        {
+            Db.UserProfiles.Add(new Data.UserProfil()
+                {
+                    Username = Name,
+                    Coins = 0,
+                    Tries = null
+
+                });
+            Db.SaveChanges();
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        LoadUser();
+        InitializeUserProfil();
+    }
 }
 
 <PageTitle>Shop</PageTitle>
 
-<h1>Shop</h1>
-
-@*@if (products == null)
-{
-        <p><em>Loading...</em></p>
-}
-else
-{
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Buy</th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var product in products)
-            {
-                        <tr>
-                            <td>@product.Name</td>
-                            <td>@product.Price</td>
-                            <td>@product.Quantity</td>
-                            <td><button class="btn btn-primary" @onclick="() => BuyProduct(product)">Buy</button></td>
-                        </tr>
-            }
-            </tbody>
-        </table>
-}*@
-@*
-@code {
-    private List<Product>? products;
-
-    protected override async Task OnInitializedAsync()
-    {
-        products = await Db.Products.ToListAsync();
-    }
-
-    private async Task BuyProduct(Product product)
-    {
-        var user = (await GetAuthenticationStateAsync.GetAuthenticationStateAsync()).User;
-        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        var userDb = await Db.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        if (userDb != null)
-        {
-            if (userDb.Balance >= product.Price)
-            {
-                userDb.Balance -= product.Price;
-                product.Quantity--;
-                await Db.SaveChangesAsync();
-                await DialogService.ShowMessage("Success", "You bought the product!");
-            }
-            else
-            {
-                await DialogService.ShowMessage("Error", "You don't have enough money!");
-            }
-        }
-    }
-}*@
+<div class="gameControl">
+    <div style="margin-left:10px;">
+        <h3 class="text-center resultOutput">Shop</h3>
+    </div>
+    <div class="coinText">
+        <h3 class="text-center resultOutput">Coins: @UserProfil.Coins</h3>
+    </div>
+</div>
