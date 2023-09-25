@@ -14,39 +14,10 @@ using Microsoft.Extensions.Options;
 var builder = WebApplication.CreateBuilder(args);
 
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
-var secondConnection = builder.Configuration.GetConnectionString("SecondaryConnection");
 
-bool defaultString = CheckServerAvailability(defaultConnection);
-var connectionString = "";
-
-bool CheckServerAvailability(string defaultConnection)
-{
-    var stringBuilder = new SqlConnectionStringBuilder(defaultConnection);
-    var serverAdress = stringBuilder.DataSource;
-
-    try
-    {
-        Ping pingSender = new Ping();
-        PingReply reply = pingSender.Send(serverAdress);
-        if (reply.Status == IPStatus.Success)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    catch (PingException)
-    {
-        return false;
-    }
-}
-
-connectionString = defaultString ? defaultConnection : secondConnection;
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseLazyLoadingProxies().UseSqlServer(connectionString));
+    options.UseLazyLoadingProxies().UseSqlServer(defaultConnection));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false).AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
