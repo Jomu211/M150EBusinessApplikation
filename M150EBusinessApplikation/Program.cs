@@ -1,3 +1,4 @@
+using System.Net.NetworkInformation;
 using M150EBusinessApplikation.Areas.Identity;
 using M150EBusinessApplikation.Data;
 using Microsoft.AspNetCore.Components;
@@ -6,12 +7,44 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+var secondConnection = builder.Configuration.GetConnectionString("SecondaryConnection");
+
+bool defaultString = CheckServerAvailability(defaultConnection);
+var connectionString = "";
+
+bool CheckServerAvailability(string defaultConnection)
+{
+    var stringBuilder = new SqlConnectionStringBuilder(defaultConnection);
+    var serverAdress = stringBuilder.DataSource;
+
+    try
+    {
+        Ping pingSender = new Ping();
+        PingReply reply = pingSender.Send(serverAdress);
+        if (reply.Status == IPStatus.Success)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    catch (PingException)
+    {
+        return false;
+    }
+}
+
+connectionString = defaultString ? defaultConnection : secondConnection;
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseLazyLoadingProxies().UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
