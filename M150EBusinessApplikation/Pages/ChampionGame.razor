@@ -541,7 +541,6 @@
 </div>
 
 @code {
-    #region Variables
 
     protected List<Champion> Champions = null!;
     protected Task<AuthenticationState> AuthState = null!;
@@ -552,8 +551,6 @@
     protected string? Role;
     protected int TryCount;
     protected int? AddedCoins;
-    #endregion
-
 
     #region Initializing
     protected override void OnInitialized()
