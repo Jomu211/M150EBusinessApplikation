@@ -1,0 +1,28 @@
+﻿@page "/shoppingcart"
+@using System.Security.Claims
+@using BootstrapBlazor.Components;
+@using M150EBusinessApplikation.Data;
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.EntityFrameworkCore
+@using NuGet.Protocol
+
+@inject ProtectedLocalStorage ProtectedLocalStorageStore
+@inject IJSRuntime JsRuntime
+@attribute [Authorize(Roles = "Admin, User")]
+@inject ApplicationDbContext Db
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject DialogService DialogService
+@inject NavigationManager Nav
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        var championsInCart = await ProtectedLocalStorageStore.GetAsync<string[]>("ChampionsInCart");
+
+    }
+
+}
+
+<div>
+
+</div>

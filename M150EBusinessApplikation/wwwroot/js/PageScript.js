@@ -208,35 +208,3 @@ function startGame() {
         .css("visibility", "visible");
 
 }
-
-function championInfo(championObjJson) {
-    var champObj = JSON.parse(championObjJson);
-
-    const tableHTML = `
-    <table>
-      <tr>
-        <td>Region:</td>
-        <td>${champObj.Region}</td>
-      </tr>
-      <tr>
-        <td>Gender:</td>
-        <td>${champObj.Gender}</td>
-      </tr>
-      <tr>
-        <td>Resource:</td>
-        <td>${champObj.Resource}</td>
-      </tr>
-      <tr>
-        <td>Combat Style:</td>
-        <td>${champObj.CombatStyle}</td>
-      </tr>
-      <tr>
-        <td>Head Attributes:</td>
-        <td></td>
-      </tr>
-    </table>
-  `;
-
-    $('#championInfoOutput_' + champObj.Name).html(tableHTML);
-    $('#championInfoOutput_' + champObj.Name).toggle();
-}

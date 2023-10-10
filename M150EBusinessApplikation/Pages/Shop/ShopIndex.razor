@@ -4,6 +4,7 @@
 @using M150EBusinessApplikation.Data;
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.EntityFrameworkCore
+@using NuGet.Protocol
 
 @inject ProtectedLocalStorage ProtectedLocalStorageStore
 @inject IJSRuntime JsRuntime
@@ -45,7 +46,11 @@
         height: auto;
         width: 85%;
         align-self: center;
+        display: flex;
         margin: 30px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .itemImageContainer {
@@ -86,13 +91,14 @@
         margin-top: 10px;
         font-size: 25px;
     }
-    .championInfoOutput{
-        display: inline-block;
+
+    .championInfo {
         color: whitesmoke;
-        display:none;
+        display: none;
         font-family: 'Poppins', sans-serif !important;
         text-shadow: #333 1px 0 10px;
-        font-size: 12px;
+        display: inline-block;
+        font-size: 19px;
     }
 </style>
 @code {
@@ -102,7 +108,6 @@
     protected UserProfil UserProfil = null!;
     protected Task<AuthenticationState> AuthState = null!;
     protected string? Name;
-
 
     public void LoadUser()
     {
@@ -136,20 +141,19 @@
         LoadUser();
         LoadChampionsToBuy();
         InitializeUserProfil();
+
     }
 
     private void AddChampionToCart(UserGameChampion champToBuy)
     {
+        var jsonChampion = System.Text.Json.JsonSerializer.Serialize(champToBuy, new System.Text.Json.JsonSerializerOptions()
+        {
+            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve
+        });
 
+        ProtectedLocalStorageStore.SetAsync("ChampionsInCart", new[] { jsonChampion });
     }
-    private async Task ChampionInfo(Champion champion)
-    {
-        var jsonChampion = System.Text.Json.JsonSerializer.Serialize(champion, new System.Text.Json.JsonSerializerOptions()
-            {
-                ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve
-            });
-        await JsRuntime.InvokeVoidAsync("championInfo", jsonChampion);
-    }
+  
 }
 
 <PageTitle>Shop</PageTitle>
@@ -173,10 +177,52 @@
                 <h3 class="shopItemName">@item.Champion.Name</h3>
                 <p class="shopItemPrice">Price: @item.Champion.Price</p>
             </div>
-            <div id="championInfoOutput_@item.Champion.Name" class="championInfoOutput">
+            <div class="championInfo">
+                <table>
+                    <tr>
+                        <td>Region:</td>
+                        <td>@item.Champion.Region</td>
+                    </tr>
+                    <tr>
+                        <td>Gender:</td>
+                        <td>@item.Champion.Gender</td>
+                    </tr>
+                    <tr>
+                        <td>Resource:</td>
+                        <td>@item.Champion.Resource</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right:10px">Combat Style:</td>
+                        <td>@item.Champion.CombatStyle</td>
+                    </tr>
+
+                    @if (item.Champion.Head.Haircolor != null)
+                    {
+                        <tr>
+                            <td>Hair color:</td>
+                            <td>@item.Champion.Head.Haircolor</td>
+                        </tr>
+
+                    }
+                    @if (item.Champion.Head.Headgear != null)
+                    {
+                        <tr>
+                            <td>Head gear:</td>
+                            <td>@item.Champion.Head.Headgear</td>
+                        </tr>
+
+                    }
+                    @if (item.Champion.Head.Other != null)
+                    {
+                        <tr>
+                            <td>Other:</td>
+                            <td>@item.Champion.Head.Other</td>
+                        </tr>
+
+                    }
+                </table>
             </div>
             <div class="itemButton">
-                <button class="btn btn-primary" @onclick="() => ChampionInfo(item.Champion)">Info</button>
                 <button class="btn btn-primary" @onclick="() => AddChampionToCart(item)">Add to cart</button>
             </div>
         </div>
