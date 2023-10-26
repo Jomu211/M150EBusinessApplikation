@@ -108,6 +108,10 @@
                 <button type="button" class="ml-md-auto btn btn-primary" @onclick="() => cancel()">Cancel</button>
             </div>
             <div class="col">
+                 <input class="form-control" type="number"
+                            placeholder="Price"
+                            @bind-value="@champion.Price" />
+                <ValidationMessage For="() => champion.Price" />
             </div>
             <div class="col">
                 <button type="submit" class="ml-md-auto btn btn-primary" style="float: right;margin-right: -8px;">

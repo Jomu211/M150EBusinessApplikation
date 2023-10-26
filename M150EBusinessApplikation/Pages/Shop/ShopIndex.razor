@@ -5,14 +5,20 @@
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.EntityFrameworkCore
 @using NuGet.Protocol
+@using Newtonsoft.Json;
 
-@inject ProtectedLocalStorage ProtectedLocalStorageStore
-@inject IJSRuntime JsRuntime
-@attribute [Authorize(Roles = "Admin, User")]
-@inject ApplicationDbContext Db
+
+@inject M150EBusinessApplikation.Services.ChampionService ChampionService
+@inject M150EBusinessApplikation.Services.UserService UserService
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject ProtectedLocalStorage ProtectedLocalStorageStore
 @inject DialogService DialogService
+@inject ApplicationDbContext Db
 @inject NavigationManager Nav
+@inject IJSRuntime JsRuntime
+
+
+@attribute [Authorize(Roles = "Admin, User")]
 
 <style>
     body {
@@ -102,58 +108,60 @@
     }
 </style>
 @code {
-    protected List<UserGameChampion> ChampionsToBuy = null!;
+    private List<UserGameChampion> ShoppingCard = new List<UserGameChampion>();
 
+    protected List<UserGameChampion> ChampionsToBuy = null!;
+    protected List<Champion> Champions = null!;
     protected ClaimsPrincipal? User;
     protected UserProfil UserProfil = null!;
     protected Task<AuthenticationState> AuthState = null!;
     protected string? Name;
 
-    public void LoadUser()
+    protected override void OnInitialized()
     {
-        AuthState = GetAuthenticationStateAsync.GetAuthenticationStateAsync()!;
-        User = AuthState.Result?.User;
-        Name = User?.Identity?.Name;
-    }
-    public void LoadChampionsToBuy()
-    {
-        ChampionsToBuy = Db.UserGameChampions.Where(t => t.Bought == false).ToList();
+        UserService.LoadUserAsync(out User, out Name);
+        UserProfil = UserService.InitializeUserProfil(Name);
+        Champions = ChampionService.LoadChampions();
+        ChampionService.InitializeUserGameChampions(Name, Champions);
+        ChampionsToBuy = ChampionService.LoadChampionsToBuy();
     }
 
-    private void InitializeUserProfil()
-    {
-        UserProfil = Db.UserProfiles.FirstOrDefault(u => u.Username == Name);
-
-        if (UserProfil == null)
-        {
-            Db.UserProfiles.Add(new Data.UserProfil()
-                {
-                    Username = Name,
-                    Coins = 0,
-                    Tries = null
-
-                });
-            Db.SaveChanges();
-        }
-    }
     protected override async Task OnInitializedAsync()
     {
-        LoadUser();
-        LoadChampionsToBuy();
-        InitializeUserProfil();
+        var cartJson = await ProtectedLocalStorageStore.GetAsync<string>("shoppingCart");
 
-    }
-
-    private void AddChampionToCart(UserGameChampion champToBuy)
-    {
-        var jsonChampion = System.Text.Json.JsonSerializer.Serialize(champToBuy, new System.Text.Json.JsonSerializerOptions()
+        if (!string.IsNullOrEmpty(cartJson.Value))
         {
-            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve
-        });
-
-        ProtectedLocalStorageStore.SetAsync("ChampionsInCart", new[] { jsonChampion });
+            ShoppingCard = JsonConvert.DeserializeObject<List<UserGameChampion>>(cartJson.Value);
+        }
     }
-  
+
+    private async Task AddChampionToCart(UserGameChampion champToBuy)
+    {
+        ShoppingCard.Add(champToBuy);
+
+        var settings = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
+
+        var cartJson = JsonConvert.SerializeObject(ShoppingCard, settings);
+
+        await ProtectedLocalStorageStore.SetAsync("shoppingCart", cartJson);
+    }
+
+    private async Task<List<UserGameChampion>> GetCartItems()
+    {
+        var cartJson = await ProtectedLocalStorageStore.GetAsync<string>("shoppingCart");
+
+        if (!string.IsNullOrEmpty(cartJson.Value))
+        {
+            return JsonConvert.DeserializeObject<List<UserGameChampion>>(cartJson.Value);
+        }
+
+        return new List<UserGameChampion>();
+    }
+
 }
 
 <PageTitle>Shop</PageTitle>
@@ -167,7 +175,7 @@
     </div>
 </div>
 <div class="itemListContainer">
-    @foreach (var item in ChampionsToBuy.OrderBy(t => t.Champion.Price))
+    @foreach (var item in ChampionsToBuy.Where(t => t.Bought == false).OrderBy(t => t.Champion.Price))
     {
         <div class="itemContainer">
             <div class="itemImageContainer">
@@ -228,3 +236,11 @@
         </div>
     }
 </div>
+
+<div>
+    @foreach (var item in ShoppingCard)
+    {
+        <div>@item.Champion.Name</div>
+    }
+</div>
+

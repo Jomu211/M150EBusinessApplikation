@@ -1,6 +1,7 @@
 using System.Net.NetworkInformation;
 using M150EBusinessApplikation.Areas.Identity;
 using M150EBusinessApplikation.Data;
+using M150EBusinessApplikation.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
@@ -27,6 +28,8 @@ builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuth
 builder.Services.AddBootstrapBlazor();
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 builder.Services.AddScoped<ProtectedSessionStorage>();
+builder.Services.AddScoped<ChampionService>();
+builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<HttpClient>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSignalR();
