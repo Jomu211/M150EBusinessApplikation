@@ -9,6 +9,7 @@
 
 
 @inject M150EBusinessApplikation.Services.ChampionService ChampionService
+@inject Microsoft.AspNetCore.Components.NavigationManager navigation
 @inject M150EBusinessApplikation.Services.UserService UserService
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
 @inject ProtectedLocalStorage ProtectedLocalStorageStore
@@ -108,7 +109,7 @@
     }
 </style>
 @code {
-    private List<UserGameChampion> ShoppingCard = new List<UserGameChampion>();
+    private List<UserGameChampion> ShoppingCart = new List<UserGameChampion>();
 
     protected List<UserGameChampion> ChampionsToBuy = null!;
     protected List<Champion> Champions = null!;
@@ -124,59 +125,62 @@
         Champions = ChampionService.LoadChampions();
         ChampionService.InitializeUserGameChampions(Name, Champions);
         ChampionsToBuy = ChampionService.LoadChampionsToBuy();
+
     }
 
     protected override async Task OnInitializedAsync()
     {
+        await GetShoppingCart();
+    }
+    protected async Task GetShoppingCart()
+    {
         var cartJson = await ProtectedLocalStorageStore.GetAsync<string>("shoppingCart");
-
         if (!string.IsNullOrEmpty(cartJson.Value))
         {
-            ShoppingCard = JsonConvert.DeserializeObject<List<UserGameChampion>>(cartJson.Value);
+            ShoppingCart = JsonConvert.DeserializeObject<List<UserGameChampion>>(cartJson.Value);
         }
+
     }
 
     private async Task AddChampionToCart(UserGameChampion champToBuy)
     {
-        ShoppingCard.Add(champToBuy);
+        ShoppingCart.Add(champToBuy);
 
         var settings = new JsonSerializerSettings
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
             };
 
-        var cartJson = JsonConvert.SerializeObject(ShoppingCard, settings);
+        var cartJson = JsonConvert.SerializeObject(ShoppingCart, settings);
 
         await ProtectedLocalStorageStore.SetAsync("shoppingCart", cartJson);
+        StateHasChanged();
+
     }
 
-    private async Task<List<UserGameChampion>> GetCartItems()
+
+    void NavigateToShoppingCart()
     {
-        var cartJson = await ProtectedLocalStorageStore.GetAsync<string>("shoppingCart");
-
-        if (!string.IsNullOrEmpty(cartJson.Value))
-        {
-            return JsonConvert.DeserializeObject<List<UserGameChampion>>(cartJson.Value);
-        }
-
-        return new List<UserGameChampion>();
+        navigation.NavigateTo("/shoppingcart");
     }
-
 }
 
 <PageTitle>Shop</PageTitle>
 
 <div class="shopControl">
+    <div><i style="float:right; display:inline-block; cursor:pointer" @onclick="() => NavigateToShoppingCart()" class="fa-solid fa-shopping-cart"></i></div>
     <div>
         Champion Shop
     </div>
     <div>
         Coins: @UserProfil.Coins
+
     </div>
 </div>
 <div class="itemListContainer">
-    @foreach (var item in ChampionsToBuy.Where(t => t.Bought == false).OrderBy(t => t.Champion.Price))
+    @foreach (var item in ChampionsToBuy.Where(t => t.Bought == false && !ShoppingCart.Contains(t)).OrderBy(t => t.Champion.Price))
     {
+        
         <div class="itemContainer">
             <div class="itemImageContainer">
                 <img src="@item.Champion.ImageUrl" class="itemImage" />
@@ -231,16 +235,13 @@
                 </table>
             </div>
             <div class="itemButton">
-                <button class="btn btn-primary" @onclick="() => AddChampionToCart(item)">Add to cart</button>
+                <div class="itemButton">
+
+                    <button class="btn btn-primary" @onclick="() => AddChampionToCart(item)">Add to cart</button>
+
+                </div>
             </div>
         </div>
-    }
-</div>
-
-<div>
-    @foreach (var item in ShoppingCard)
-    {
-        <div>@item.Champion.Name</div>
     }
 </div>
 

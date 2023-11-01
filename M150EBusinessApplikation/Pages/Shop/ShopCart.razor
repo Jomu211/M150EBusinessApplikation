@@ -5,24 +5,234 @@
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.EntityFrameworkCore
 @using NuGet.Protocol
+@using Newtonsoft.Json;
 
-@inject ProtectedLocalStorage ProtectedLocalStorageStore
-@inject IJSRuntime JsRuntime
-@attribute [Authorize(Roles = "Admin, User")]
-@inject ApplicationDbContext Db
+
+@inject M150EBusinessApplikation.Services.ChampionService ChampionService
+@inject Microsoft.AspNetCore.Components.NavigationManager navigation
+@inject M150EBusinessApplikation.Services.UserService UserService
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject ProtectedLocalStorage ProtectedLocalStorageStore
 @inject DialogService DialogService
+@inject ApplicationDbContext Db
 @inject NavigationManager Nav
+@inject IJSRuntime JsRuntime
+
+@attribute [Authorize(Roles = "Admin, User")]
+<style>
+    body {
+        overflow-y: scroll !important;
+    }
+
+    div.shopControl {
+        display: block;
+        margin: 50px;
+        text-align: left;
+    }
+
+    .shopControl div {
+        font-size: 60px;
+        font-family: 'Poppins', sans-serif;
+        color: whitesmoke;
+    }
+
+    div.itemListContainer {
+        width: 100%;
+        display: flex;
+        margin: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    div.itemContainer {
+        background-color: #1d1d1d7d;
+        border-radius: 5px;
+        padding: 20px;
+        height: auto;
+        width: 85%;
+        align-self: center;
+        display: flex;
+        margin: 30px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .itemImageContainer {
+        display: inline-block;
+    }
+
+    .itemText {
+        padding: 10px;
+        padding-top: 0px;
+        margin-top: -8px;
+        position: relative;
+        top: 10px;
+        display: inline-block;
+        color: whitesmoke;
+    }
+
+    .itemButton {
+        float: right;
+    }
+
+    .itemImage {
+        width: 200px;
+        border-radius: 5px;
+    }
+
+
+    .shopItemDescription, .shopItemName, .shopItemPrice {
+        font-size: 15px;
+        font-family: 'Poppins', sans-serif !important;
+        text-shadow: #333 1px 0 10px;
+    }
+
+    .shopItemName {
+        font-size: 30px;
+    }
+
+    p.shopItemPrice {
+        margin-top: 10px;
+        font-size: 25px;
+    }
+
+    .championInfo {
+        color: whitesmoke;
+        display: none;
+        font-family: 'Poppins', sans-serif !important;
+        text-shadow: #333 1px 0 10px;
+        display: inline-block;
+        font-size: 19px;
+    }
+</style>
 @code {
+    private List<UserGameChampion> ShoppingCart = new List<UserGameChampion>();
+    protected ClaimsPrincipal? User;
+    protected UserProfil UserProfil = null!;
+    protected Task<AuthenticationState> AuthState = null!;
+    protected string? Name;
+    protected int? Costs;
 
     protected override async Task OnInitializedAsync()
     {
-        var championsInCart = await ProtectedLocalStorageStore.GetAsync<string[]>("ChampionsInCart");
+        UserService.LoadUserAsync(out User, out Name);
+        UserProfil = UserService.InitializeUserProfil(Name);
+        ShoppingCart = await GetCartItems();
 
+        foreach(var champ in ShoppingCart)
+        {
+            Costs += champ.Champion.Price;
+        }
     }
 
+    private async Task<List<UserGameChampion>> GetCartItems()
+    {
+        var cartJson = await ProtectedLocalStorageStore.GetAsync<string>("shoppingCart");
+
+        if (!string.IsNullOrEmpty(cartJson.Value))
+        {
+            return JsonConvert.DeserializeObject<List<UserGameChampion>>(cartJson.Value);
+        }
+
+        return new List<UserGameChampion>();
+    }
+
+    private async Task RemoveChampionFromCart(UserGameChampion champ)
+    {
+        ShoppingCart.Remove(champ);
+
+        var settings = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
+
+        var cartJson = JsonConvert.SerializeObject(ShoppingCart, settings);
+
+        await ProtectedLocalStorageStore.SetAsync("shoppingCart", cartJson);
+
+        StateHasChanged();
+    }
+
+    private async Task BuyChampionInCart(List<UserGameChampion> championsToBuy)
+    {
+
+    }
 }
 
-<div>
+<div class="shopControl">
+    <div class="itemButton" style="float:right; display:inline-block; cursor:pointer">
+        <button class="btn btn-primary" @onclick="() => BuyChampionInCart(ShoppingCart)">Buy Champions</button>
+    </div>
+    <div>
+        Shopping Cart
+    </div>
+    <div>
+        Coins: @UserProfil.Coins 
+        Costs: @Costs
+    </div>
+</div>
+<div class="itemListContainer">
+    @foreach (var item in ShoppingCart.OrderBy(t => t.Champion.Price))
+    {
+        <div class="itemContainer">
+            <div class="itemImageContainer">
+                <img src="@item.Champion.ImageUrl" class="itemImage" />
+            </div>
+            <div class="itemText">
+                <h3 class="shopItemName">@item.Champion.Name</h3>
+                <p class="shopItemPrice">Price: @item.Champion.Price</p>
+            </div>
+            <div class="championInfo">
+                <table>
+                    <tr>
+                        <td>Region:</td>
+                        <td>@item.Champion.Region</td>
+                    </tr>
+                    <tr>
+                        <td>Gender:</td>
+                        <td>@item.Champion.Gender</td>
+                    </tr>
+                    <tr>
+                        <td>Resource:</td>
+                        <td>@item.Champion.Resource</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right:10px">Combat Style:</td>
+                        <td>@item.Champion.CombatStyle</td>
+                    </tr>
+
+                    @if (item.Champion.Head.Haircolor != null)
+                    {
+                        <tr>
+                            <td>Hair color:</td>
+                            <td>@item.Champion.Head.Haircolor</td>
+                        </tr>
+
+                    }
+                    @if (item.Champion.Head.Headgear != null)
+                    {
+                        <tr>
+                            <td>Head gear:</td>
+                            <td>@item.Champion.Head.Headgear</td>
+                        </tr>
+
+                    }
+                    @if (item.Champion.Head.Other != null)
+                    {
+                        <tr>
+                            <td>Other:</td>
+                            <td>@item.Champion.Head.Other</td>
+                        </tr>
+
+                    }
+                </table>
+            </div>
+            <div class="itemButton">
+                <button class="btn btn-primary" @onclick="() => RemoveChampionFromCart(item)">Remove</button>
+            </div>
+        </div>
+    }
 
 </div>
+
