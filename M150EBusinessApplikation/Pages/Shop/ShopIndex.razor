@@ -6,6 +6,8 @@
 @using Microsoft.EntityFrameworkCore
 @using NuGet.Protocol
 @using Newtonsoft.Json;
+@using System.Runtime.CompilerServices
+@using NuGet.Configuration
 
 
 @inject M150EBusinessApplikation.Services.ChampionService ChampionService
@@ -76,6 +78,9 @@
 
     .itemButton {
         float: right;
+        /*         min-width:250px;
+                     */ width: 250px;
+        text-align: center;
     }
 
     .itemImage {
@@ -107,16 +112,27 @@
         display: inline-block;
         font-size: 19px;
     }
+
+    .itemsInCart {
+        position: relative;
+        top: -15px;
+        right: 0px;
+        float: right;
+        padding-right: 20px;
+        display: inline-block;
+    }
 </style>
 @code {
-    private List<UserGameChampion> ShoppingCart = new List<UserGameChampion>();
 
+    private List<UserGameChampion> ShoppingCart = new();
     protected List<UserGameChampion> ChampionsToBuy = null!;
     protected List<Champion> Champions = null!;
     protected ClaimsPrincipal? User;
     protected UserProfil UserProfil = null!;
     protected Task<AuthenticationState> AuthState = null!;
     protected string? Name;
+    private int ItemsInCart = 0;
+
 
     protected override void OnInitialized()
     {
@@ -125,27 +141,45 @@
         Champions = ChampionService.LoadChampions();
         ChampionService.InitializeUserGameChampions(Name, Champions);
         ChampionsToBuy = ChampionService.LoadChampionsToBuy();
-
     }
 
     protected override async Task OnInitializedAsync()
     {
-        await GetShoppingCart();
+        ShoppingCart = await GetCartItems();
+        ItemsInCart = ShoppingCart.Count;
+        await ProtectedLocalStorageStore.SetAsync("itemCounter", ItemsInCart.ToString());
     }
-    protected async Task GetShoppingCart()
+
+
+    private async void IncreaseItemCounter()
+    {
+        ItemsInCart++;
+        await ProtectedLocalStorageStore.SetAsync("itemCounter", ItemsInCart.ToString());
+
+    }
+
+    private async Task<List<UserGameChampion>> GetCartItems()
     {
         var cartJson = await ProtectedLocalStorageStore.GetAsync<string>("shoppingCart");
+
         if (!string.IsNullOrEmpty(cartJson.Value))
         {
-            ShoppingCart = JsonConvert.DeserializeObject<List<UserGameChampion>>(cartJson.Value);
+            return JsonConvert.DeserializeObject<List<UserGameChampion>>(cartJson.Value);
         }
 
+        return new List<UserGameChampion>();
     }
 
     private async Task AddChampionToCart(UserGameChampion champToBuy)
     {
-        ShoppingCart.Add(champToBuy);
+        if (ShoppingCart.Any(t => t.ChampionId == champToBuy.ChampionId))
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Champion already in cart");
+            return;
+        }
 
+        IncreaseItemCounter();
+        ShoppingCart.Add(champToBuy);
         var settings = new JsonSerializerSettings
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
@@ -158,29 +192,28 @@
 
     }
 
-
     void NavigateToShoppingCart()
     {
         navigation.NavigateTo("/shoppingcart");
     }
+
 }
 
 <PageTitle>Shop</PageTitle>
 
 <div class="shopControl">
-    <div><i style="float:right; display:inline-block; cursor:pointer" @onclick="() => NavigateToShoppingCart()" class="fa-solid fa-shopping-cart"></i></div>
+    <div><i style="float:right; display:inline-block; cursor:pointer" @onclick="NavigateToShoppingCart" class="fa-solid fa-shopping-cart"></i><div class="itemsInCart">@ItemsInCart</div></div>
     <div>
         Champion Shop
     </div>
     <div>
         Coins: @UserProfil.Coins
-
     </div>
 </div>
 <div class="itemListContainer">
-    @foreach (var item in ChampionsToBuy.Where(t => t.Bought == false && !ShoppingCart.Contains(t)).OrderBy(t => t.Champion.Price))
+    @foreach (var item in ChampionsToBuy.Where(t => t.Bought == false).OrderByDescending(t => t.Champion.Price))
     {
-        
+
         <div class="itemContainer">
             <div class="itemImageContainer">
                 <img src="@item.Champion.ImageUrl" class="itemImage" />
@@ -236,9 +269,7 @@
             </div>
             <div class="itemButton">
                 <div class="itemButton">
-
                     <button class="btn btn-primary" @onclick="() => AddChampionToCart(item)">Add to cart</button>
-
                 </div>
             </div>
         </div>

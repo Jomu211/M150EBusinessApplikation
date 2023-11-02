@@ -658,7 +658,7 @@
     {
         int randomIndex = new Random().Next(0, Champions.Count);
         var chosenChamp = Db.UserGameChampions.Where(x => x.Bought)
-            .FirstOrDefault(x => x.ChampionId == randomIndex && x.Username == Name);
+            .FirstOrDefault(x => x.Bought && x.ChampionId == randomIndex && x.Username == Name);
 
         if (chosenChamp != null)
         {
@@ -774,7 +774,7 @@
             await AddCoinsToAccount();
             await OpenFinishDialog(userChamp.Champion);
             await ClearCount();
-            await RestartGame();
+            await ChampionService.RestartGame(Champions, JsRuntime, Name);
         }
         else
         {
@@ -789,24 +789,6 @@
     private async Task StartGame()
     {
         await JsRuntime.InvokeVoidAsync("startGame");
-    }
-    private async Task RestartGame()
-    {
-        foreach (var champ in Champions)
-        {
-            var userChamp = Db.UserGameChampions.FirstOrDefault(x => x.ChampionId == champ.Id && x.Username == Name);
-            if (userChamp != null)
-            {
-                userChamp.Hidden = false;
-                userChamp.Chosen = false;
-                Db.Entry(userChamp).State = EntityState.Modified;
-            }
-        }
-        await Db.SaveChangesAsync();
-        await JsRuntime.InvokeVoidAsync("flipAll");
-        await JsRuntime.InvokeVoidAsync("resultOutput", null);
-
-
     }
 
     private async Task OpenFinishDialog(Champion champion)

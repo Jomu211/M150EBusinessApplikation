@@ -7,6 +7,10 @@
         margin: 15vw 0px 0px 0px;
         align-items: center;
     }
+
+    .btn {
+        min-width: 175px;
+    }
 </style>
 <PageTitle>Index</PageTitle>
 <div class="index-container">
@@ -16,7 +20,8 @@
             <h3 class="text-center" style="text-align: center;">
                 Play "Who am I", NOW!
             </h3>
-            <a class="btn btn-primary" @onclick="StartGame">Game<i class="fa-solid fa-fw fa-arrow-right" style="color: whitesmoke;"></i></a>
+            <a class="btn btn-primary" @onclick="NavToGame">Game<i class="fa-solid fa-fw fa-arrow-right" style="color: whitesmoke;"></i></a>
+            <a class="btn btn-primary" @onclick="NavToShop">Shop<i class="fa-solid fa-fw fa-arrow-right" style="color: whitesmoke;"></i></a>
 
         </Authorized>
         <NotAuthorized>
@@ -28,9 +33,13 @@
 </div>
 
 @code {
-    private void StartGame()
+    private void NavToGame()
     {
         NavigationManager.NavigateTo("/championgame");
+    }
+    private void NavToShop()
+    {
+        NavigationManager.NavigateTo("/shop");
     }
 
 

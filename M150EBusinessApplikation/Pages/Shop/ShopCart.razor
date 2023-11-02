@@ -3,6 +3,7 @@
 @using BootstrapBlazor.Components;
 @using M150EBusinessApplikation.Data;
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.Mvc.ModelBinding
 @using Microsoft.EntityFrameworkCore
 @using NuGet.Protocol
 @using Newtonsoft.Json;
@@ -24,16 +25,15 @@
         overflow-y: scroll !important;
     }
 
-    div.shopControl {
-        display: block;
-        margin: 50px;
-        text-align: left;
-    }
-
-    .shopControl div {
+    .shopControl {
         font-size: 60px;
         font-family: 'Poppins', sans-serif;
         color: whitesmoke;
+        display: flex;
+        margin: 50px;
+        text-align: left;
+        flex-direction: row;
+        justify-content: space-between;
     }
 
     div.itemListContainer {
@@ -105,25 +105,46 @@
         display: inline-block;
         font-size: 19px;
     }
+
+    html body button.btn.btn-primary {
+        margin: 0px;
+    }
 </style>
 @code {
     private List<UserGameChampion> ShoppingCart = new List<UserGameChampion>();
+    protected List<Champion> Champions = null!;
     protected ClaimsPrincipal? User;
     protected UserProfil UserProfil = null!;
     protected Task<AuthenticationState> AuthState = null!;
     protected string? Name;
-    protected int? Costs;
+    protected int? Costs = 0;
+    private int ItemsInCart = 0;
+
 
     protected override async Task OnInitializedAsync()
     {
         UserService.LoadUserAsync(out User, out Name);
         UserProfil = UserService.InitializeUserProfil(Name);
         ShoppingCart = await GetCartItems();
+        Champions = ChampionService.LoadChampions();
 
-        foreach(var champ in ShoppingCart)
+        foreach (var champ in ShoppingCart)
         {
             Costs += champ.Champion.Price;
         }
+        await GetItemCounter();
+    }
+
+    private async Task GetItemCounter()
+    {
+        var result = await ProtectedLocalStorageStore.GetAsync<string>("itemCounter");
+        ItemsInCart = result.Success && int.TryParse(result.Value, out int count) ? count : 0;
+    }
+    private async Task DecreaseItemCounter()
+    {
+        ItemsInCart--;
+        await ProtectedLocalStorageStore.SetAsync("itemCounter", ItemsInCart.ToString());
+
     }
 
     private async Task<List<UserGameChampion>> GetCartItems()
@@ -140,37 +161,90 @@
 
     private async Task RemoveChampionFromCart(UserGameChampion champ)
     {
+        await DecreaseItemCounter();
         ShoppingCart.Remove(champ);
-
+        Costs -= champ.Champion.Price;
         var settings = new JsonSerializerSettings
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
             };
-
         var cartJson = JsonConvert.SerializeObject(ShoppingCart, settings);
 
         await ProtectedLocalStorageStore.SetAsync("shoppingCart", cartJson);
 
         StateHasChanged();
     }
+    private async Task ClearCart()
+    {
+        await ProtectedLocalStorageStore.DeleteAsync("shoppingCart");
+        await ProtectedLocalStorageStore.DeleteAsync("itemCounter");
+        ShoppingCart.Clear();
+        ItemsInCart = 0;
+        StateHasChanged();
+    }
+
 
     private async Task BuyChampionInCart(List<UserGameChampion> championsToBuy)
     {
+        if (UserProfil.Coins < Costs)
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Not enough coins");
+            return;
+        }
+        if (championsToBuy.Count == 0)
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Cart is empty");
+            return;
+        }
 
+        UserProfil.Coins -= Costs;
+        Db.UserProfiles.Update(UserProfil);
+        await Db.SaveChangesAsync();
+
+        Db.ChangeTracker.Clear();
+
+        foreach (var champ in championsToBuy)
+        {
+            champ.Bought = true;
+            Db.UserGameChampions.Update(champ);
+        }
+
+        await Db.SaveChangesAsync();
+        await ClearCart();
+
+        await JsRuntime.InvokeVoidAsync("alert", "Champions bought");
+        await ChampionService.RestartGame(Champions, JsRuntime, Name);
+        await ProtectedLocalStorageStore.DeleteAsync("TryCount");
+
+        NavigateToShop();
+    }
+
+    void NavigateToShop()
+    {
+        navigation.NavigateTo("/shop");
     }
 }
 
+
 <div class="shopControl">
-    <div class="itemButton" style="float:right; display:inline-block; cursor:pointer">
-        <button class="btn btn-primary" @onclick="() => BuyChampionInCart(ShoppingCart)">Buy Champions</button>
+    <div style="float:left;">
+        <div>
+            Shopping Cart
+        </div>
+        <div style="cursor:pointer">
+            <button class="btn btn-primary" @onclick="() => BuyChampionInCart(ShoppingCart)">Buy Champions</button>
+        </div>
     </div>
-    <div>
-        Shopping Cart
+    <div style="float:right;">
+        <div style="float:right;">
+            Coins: @UserProfil.Coins
+        </div>
+        <div style="color: red;">
+            Costs: @Costs
+        </div>
     </div>
-    <div>
-        Coins: @UserProfil.Coins 
-        Costs: @Costs
-    </div>
+
+
 </div>
 <div class="itemListContainer">
     @foreach (var item in ShoppingCart.OrderBy(t => t.Champion.Price))
