@@ -26,7 +26,7 @@
     }
 
     .shopControl {
-        font-size: 60px;
+        font-size: 45px;
         font-family: 'Poppins', sans-serif;
         color: whitesmoke;
         display: flex;
@@ -108,6 +108,16 @@
 
     html body button.btn.btn-primary {
         margin: 0px;
+    }
+
+    .shoppingCardButton {
+        min-width: 313px;
+        cursor:pointer;
+        min-height:68px;
+    }
+
+    .shoppingCardTitle {
+        font-size: 60px;
     }
 </style>
 @code {
@@ -228,19 +238,23 @@
 
 <div class="shopControl">
     <div style="float:left;">
-        <div>
+        <div class="shoppingCardTitle">
             Shopping Cart
         </div>
-        <div style="cursor:pointer">
-            <button class="btn btn-primary" @onclick="() => BuyChampionInCart(ShoppingCart)">Buy Champions</button>
-        </div>
-    </div>
-    <div style="float:right;">
-        <div style="float:right;">
+        <div>
             Coins: @UserProfil.Coins
         </div>
         <div style="color: red;">
             Costs: @Costs
+        </div>
+
+    </div>
+    <div style="float:right;">
+        <div style="height:80px;">
+            <button class="btn btn-primary shoppingCardButton" @onclick="() => NavigateToShop()">Back to Shop</button>
+        </div>
+        <div style="height:80px;">
+            <button class="btn btn-primary shoppingCardButton" @onclick="() => BuyChampionInCart(ShoppingCart)">Buy Champions</button>
         </div>
     </div>
 
