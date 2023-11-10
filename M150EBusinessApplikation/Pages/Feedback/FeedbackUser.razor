@@ -1,0 +1,113 @@
+﻿@page "/feedback"
+@using M150EBusinessApplikation.Data
+@using M150EBusinessApplikation.Services
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+<h3>Give Feedback</h3>
+
+@inject ApplicationDbContext Db
+@inject NavigationManager NavigationManager
+@inject M150EBusinessApplikation.Services.UserService UserService
+
+@attribute [Authorize(Roles = "Admin, User")]
+@if (Feedback == null)
+{
+    <div>Loading...</div>
+}
+else
+{
+    @if (LastFeedbackTime > DateTime.Now) //Funkt nicht
+    {
+        <div>Sie haben gerade ein Feedback geschrieben, warten Sie einen Moment, bis Sie erneut ein Feedback schreiben.</div>
+    }
+    else
+    {
+        <EditForm Model="@Feedback" OnValidSubmit="@SubmitFeedback">
+            <DataAnnotationsValidator />
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <input class="form-control" autocomplete="Username" aria-required="true" placeholder="name@example.com" @bind="@Feedback.EmailAddress" />
+                        <ValidationMessage For="() => Feedback.EmailAddress" />
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <textarea class="form-control" autocomplete="FeedbackText" aria-required="true" placeholder="Feedback Text" @bind="@Feedback.FeedbackText"></textarea>
+                        <ValidationMessage For="() => Feedback.FeedbackText" />
+
+                    </div>
+                </div>
+                <div class="col">
+                    <button type="submit" class="ml-md-auto btn btn-primary" style="float: right;margin-right: -8px;">
+                        Send Feedback
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    }
+
+}
+
+
+
+
+@code {
+
+    protected ClaimsPrincipal? User;
+    protected UserProfil UserProfil = null!;
+    protected string? Name;
+    protected string? Username;
+    public Feedback? Feedback { get; set; }
+    public List<Feedback?> Feedbacks { get; set; }
+    public DateTime? LastFeedbackTime;
+
+    protected override void OnInitialized()
+    {
+
+        UserService.LoadUserAsync(out User, out Name);
+        UserProfil = UserService.InitializeUserProfil(Name);
+
+        InitializeFeedbackModel();
+        Test();
+        Username = Name.Split('@', 2)[0].Replace('.', ' ');
+    }
+
+
+
+
+    public void InitializeFeedbackModel()
+    {
+        Feedback = new Feedback
+            {
+                UserProfilId = UserProfil.Id,
+                Username = Name.Split('@', 2)[0].Replace('.', ' '),
+                EmailAddress = Name
+            };
+    }
+
+    private async Task Test()
+    {
+        LastFeedbackTime = Db.Feedbacks?.OrderBy(t => t.FeedbackTime).FirstOrDefault(t => t.UserProfilId == Feedback.UserProfilId)?.FeedbackTime.AddMinutes(3);
+    }
+
+    private async Task SubmitFeedback()
+    {
+        try
+        {
+            if (Feedback.Id == 0)
+            {
+                Db.Feedbacks.Add(Feedback);
+                Db.Entry(Feedback).State = EntityState.Added;
+
+            }
+            await Db.SaveChangesAsync();
+            NavigationManager.NavigateTo("feedback", true);
+        }
+        catch (Exception e)
+        {
+            throw e;
+        }
+    }
+}

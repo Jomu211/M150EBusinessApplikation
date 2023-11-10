@@ -9,6 +9,7 @@ namespace M150EBusinessApplikation.Data
         public DbSet<Head> Heads { get; set; }
         public DbSet<UserGameChampion> UserGameChampions { get; set; }
         public DbSet<UserProfil> UserProfiles { get; set; }
+        public DbSet<Feedback> Feedbacks { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
            : base(options)

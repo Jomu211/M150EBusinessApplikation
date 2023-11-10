@@ -3,11 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace M150EBusinessApplikation.Data
 {
-    [Table("Feedback")]
     public class Feedback
     {
         [Key]
         public int Id { get; set; }
+
         [ForeignKey("UserProfil")]
         public int UserProfilId { get; set; }
         public string Username { get; set; }
@@ -24,12 +24,13 @@ namespace M150EBusinessApplikation.Data
 
         [Display(Name = "Last Feedback")]
         public DateTime FeedbackTime { get; set; } = DateTime.Now;
+        public virtual UserProfil UserProfil { get; set; }
+
         public Feedback() { }
         public Feedback(string username, string feedbackText)
         {
             Username = username;
             FeedbackText = feedbackText;
         }
-        public virtual UserProfil UserProfil { get; set; }
     }
 }
