@@ -198,35 +198,51 @@
     {
         if (UserProfil.Coins < Costs)
         {
-            await JsRuntime.InvokeVoidAsync("alert", "Not enough coins");
+            ShowAlert("Not enough coins");
             return;
         }
         if (championsToBuy.Count == 0)
         {
-            await JsRuntime.InvokeVoidAsync("alert", "Cart is empty");
+            ShowAlert("Cart is empty");
             return;
         }
 
-        UserProfil.Coins -= Costs;
-        Db.UserProfiles.Update(UserProfil);
+        UpdateUserCoins();
+        await SafeDbChange();
+
+        UpdateUserGameChampions(championsToBuy);
         await Db.SaveChangesAsync();
 
-        Db.ChangeTracker.Clear();
+        await ClearCart();
 
+        ShowAlert("Champions bought");
+        await ChampionService.RestartGame(Champions, JsRuntime, Name);
+        await ProtectedLocalStorageStore.DeleteAsync("TryCount");
+
+        NavigateToShop();
+    }
+    private void UpdateUserGameChampions(List<UserGameChampion> championsToBuy)
+    {
         foreach (var champ in championsToBuy)
         {
             champ.Bought = true;
             Db.UserGameChampions.Update(champ);
         }
+    }
+    private void UpdateUserCoins()
+    {
+        UserProfil.Coins -= Costs;
+        Db.UserProfiles.Update(UserProfil);
+    }
 
+    private async Task SafeDbChange()
+    {
         await Db.SaveChangesAsync();
-        await ClearCart();
-
-        await JsRuntime.InvokeVoidAsync("alert", "Champions bought");
-        await ChampionService.RestartGame(Champions, JsRuntime, Name);
-        await ProtectedLocalStorageStore.DeleteAsync("TryCount");
-
-        NavigateToShop();
+        Db.ChangeTracker.Clear();
+    }
+    private async void ShowAlert(string message)
+    {
+        await JsRuntime.InvokeVoidAsync("alert", message);
     }
 
     void NavigateToShop()

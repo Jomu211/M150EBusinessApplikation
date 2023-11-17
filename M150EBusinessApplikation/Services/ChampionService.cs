@@ -14,9 +14,9 @@ namespace M150EBusinessApplikation.Services
         {
             Db = db;
         }
-        public List<UserGameChampion> LoadChampionsToBuy()
+        public List<UserGameChampion> LoadChampionsToBuy(string? username)
         {
-            return Db.UserGameChampions.Where(t => t.Bought == false).ToList();
+            return Db.UserGameChampions.Where(t => t.Username == username && t.Bought == false).ToList();
         }
         public List<Champion> LoadChampions()
         {

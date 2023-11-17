@@ -140,7 +140,7 @@
         UserProfil = UserService.InitializeUserProfil(Name);
         Champions = ChampionService.LoadChampions();
         ChampionService.InitializeUserGameChampions(Name, Champions);
-        ChampionsToBuy = ChampionService.LoadChampionsToBuy();
+        ChampionsToBuy = ChampionService.LoadChampionsToBuy(Name);
     }
 
     protected override async Task OnInitializedAsync()

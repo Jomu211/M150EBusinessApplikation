@@ -532,7 +532,7 @@
     </div>
 
     <div class="gameGrid">
-        @foreach (var champion in Champions.Where(c => c.UserGameChampions.Any(u => u.Bought)))
+        @foreach (var champion in Champions.Where(c => c.UserGameChampions.Any(u => u.Bought && u.Username == Name)))
         {
             <div id="@champion.Name" class="championBox" data-champid="@champion.Name">
                 <img class="front" src="@champion.ImageUrl" />
