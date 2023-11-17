@@ -1,15 +1,100 @@
 ﻿@page "/feedbackadmin"
+@using M150EBusinessApplikation.Data
+@using M150EBusinessApplikation.Services
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
 
-<h3>Feedbacks</h3>
-<div>
-@*     @foreach (var feedback in Feedbacks)
+@inject ApplicationDbContext Db
+@inject NavigationManager NavigationManager
+@inject M150EBusinessApplikation.Services.UserService UserService
+
+@attribute [Authorize(Roles = "Admin")]
+
+<style>
+    body {
+        overflow-y: scroll !important;
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+
+    .feedbackContainer {
+        background-color: #1d1d1d7d;
+        border-radius: 10px;
+        padding: 10px;
+        color: whitesmoke;
+    }
+
+    th, td {
+        padding: 3px 20px 3px 20px;
+        max-width: 500px;
+    }
+
+    td {
+        border-bottom: 1px solid whitesmoke;
+        margin-bottom: 5px;
+    }
+
+</style>
+<AuthorizeView Roles="Admin">
+
+    @if (Feedbacks == null)
     {
-        <ul>
-            <li>@feedback.FeedbackText</li>
-            <li>@feedback.Username</li>
-        </ul>
-    } *@
-</div>
+        <div>Loading...</div>
+    }
+    else
+    {
+        <div class="flex-container">
+
+            <h3 class="text-center">User Feedbacks</h3>
+            <div class="feedbackContainer">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="text-center">Username</th>
+                            <th class="text-center">Feedback Text</th>
+                            <th class="text-center">Feedback Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Feedbacks)
+                        {
+                            <tr>
+                                <td class="text-center" title="@item.EmailAddress">@item.Username</td>
+                                <td class="text-center">@item.FeedbackText</td>
+                                <td class="text-center">@item.FeedbackTime</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+
+    }
+</AuthorizeView>
+
+
+
 @code {
-    
+
+    public List<Feedback?> Feedbacks { get; set; }
+
+    protected override void OnInitialized()
+    {
+        InizializeFeedbacks();
+    }
+
+    public void InizializeFeedbacks()
+    {
+        Feedbacks = Db.Feedbacks.OrderByDescending(t => t.FeedbackTime).ThenBy(t => t.EmailAddress).ToList();
+
+    }
+
 }

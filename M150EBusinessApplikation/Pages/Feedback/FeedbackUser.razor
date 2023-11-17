@@ -3,50 +3,74 @@
 @using M150EBusinessApplikation.Services
 @using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
-<h3>Give Feedback</h3>
 
 @inject ApplicationDbContext Db
 @inject NavigationManager NavigationManager
 @inject M150EBusinessApplikation.Services.UserService UserService
 
 @attribute [Authorize(Roles = "Admin, User")]
+
+<style>
+    body{
+        overflow-y: scroll !important;     
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+    .form-control{
+        overflow-y: hidden !important;    
+    }
+</style>
 @if (Feedback == null)
 {
     <div>Loading...</div>
 }
 else
 {
-    @if (LastFeedbackTime > DateTime.Now) //Funkt nicht
-    {
-        <div>Sie haben gerade ein Feedback geschrieben, warten Sie einen Moment, bis Sie erneut ein Feedback schreiben.</div>
-    }
-    else
-    {
-        <EditForm Model="@Feedback" OnValidSubmit="@SubmitFeedback">
-            <DataAnnotationsValidator />
-            <div class="container">
-                <div class="row">
-                    <div class="col">
-                        <input class="form-control" autocomplete="Username" aria-required="true" placeholder="name@example.com" @bind="@Feedback.EmailAddress" />
-                        <ValidationMessage For="() => Feedback.EmailAddress" />
+    <div class="flex-container">
 
+        @if (LastFeedbackTime > DateTime.Now)
+        {
+            <h3 class="text-center">Thanks for your Feedback!</h3>
+
+            <h3 class="text-center" style="font-size:25px;">You've just written a feedback, please wait a moment</h3>
+        }
+        else
+        {
+            <h3 class="text-center">Give Feedback</h3>
+
+            <EditForm Model="@Feedback" OnValidSubmit="@SubmitFeedback" >
+                <DataAnnotationsValidator/>
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <input class="form-control" autocomplete="Username" aria-required="true" placeholder="name@example.com" @bind="@Feedback.EmailAddress"/>
+                            <ValidationMessage For="() => Feedback.EmailAddress"/>
+
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <textarea class="form-control" autocomplete="FeedbackText" aria-required="true" placeholder="Feedback Text" @bind="@Feedback.FeedbackText"></textarea>
+                            <ValidationMessage For="() => Feedback.FeedbackText"/>
+
+                        </div>
+                    </div>
+                    <div class="col">
+                        <button type="submit" class="ml-md-auto btn btn-primary" style="width: 100%;font-size: 30px;">
+                            Send Feedback
+                        </button>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col">
-                        <textarea class="form-control" autocomplete="FeedbackText" aria-required="true" placeholder="Feedback Text" @bind="@Feedback.FeedbackText"></textarea>
-                        <ValidationMessage For="() => Feedback.FeedbackText" />
-
-                    </div>
-                </div>
-                <div class="col">
-                    <button type="submit" class="ml-md-auto btn btn-primary" style="float: right;margin-right: -8px;">
-                        Send Feedback
-                    </button>
-                </div>
-            </div>
-        </EditForm>
-    }
+            </EditForm>
+        }
+    </div>
+   
 
 }
 
@@ -89,7 +113,7 @@ else
 
     private async Task Test()
     {
-        LastFeedbackTime = Db.Feedbacks?.OrderBy(t => t.FeedbackTime).FirstOrDefault(t => t.UserProfilId == Feedback.UserProfilId)?.FeedbackTime.AddMinutes(3);
+        LastFeedbackTime = Db.Feedbacks?.OrderByDescending(t => t.FeedbackTime).FirstOrDefault(t => t.UserProfilId == Feedback.UserProfilId)?.FeedbackTime.AddMinutes(3);
     }
 
     private async Task SubmitFeedback()

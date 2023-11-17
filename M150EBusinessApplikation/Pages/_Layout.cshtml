@@ -18,6 +18,27 @@
     <style>
         @@import url('https://fonts.googleapis.com/css2?family=Rubik+Iso&display=swap');
         @@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap');
+        
+        
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: rgba(0, 0, 0, 0.6);
+            }
+
+            ::-webkit-scrollbar-thumb:active {
+                background: rgba(0, 0, 0, 0.7);
+            }
 
         .index-container {
             margin: 25px;
@@ -86,6 +107,16 @@
             border: 1px solid transparent;
         }
 
+        textarea.form-control {
+            margin: 10px;
+            font-size: 22px;
+            height: 200px;
+            background-color: rgba(0, 0, 0, 0.5);
+            font-family: 'Poppins', sans-serif;
+            color: whitesmoke;
+            border: 1px solid transparent;
+        }
+
         input.form-check-input:hover {
             cursor: pointer !important;
             opacity: 0.9 !important;
@@ -95,7 +126,7 @@
             margin: 9px;
         }
 
-        input.form-control:focus, input.form-control:active, select.form-control:focus, select.form-control:active {
+        input.form-control:focus, input.form-control:active, select.form-control:focus, select.form-control:active, textarea.form-control:focus, textarea.form-control:active {
             background-color: rgba(0, 0, 0, 0.5);
             color: whitesmoke;
             border: 1px solid whitesmoke;
