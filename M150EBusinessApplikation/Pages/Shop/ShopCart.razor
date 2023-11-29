@@ -4,6 +4,7 @@
 @using M150EBusinessApplikation.Data;
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.AspNetCore.Mvc.ModelBinding
+@using Microsoft.AspNetCore.Mvc;
 @using Microsoft.EntityFrameworkCore
 @using NuGet.Protocol
 @using Newtonsoft.Json;
@@ -169,6 +170,7 @@
         return new List<UserGameChampion>();
     }
 
+    [ValidateAntiForgeryToken]
     private async Task RemoveChampionFromCart(UserGameChampion champ)
     {
         await DecreaseItemCounter();
@@ -193,8 +195,9 @@
         StateHasChanged();
     }
 
-
-    private async Task BuyChampionInCart(List<UserGameChampion> championsToBuy)
+    [ValidateAntiForgeryToken]
+    private async Task BuyChampionInCart
+    (List<UserGameChampion> championsToBuy)
     {
         if (UserProfil.Coins < Costs)
         {
@@ -216,12 +219,16 @@
         await ClearCart();
 
         ShowAlert("Champions bought");
-        await ChampionService.RestartGame(Champions, JsRuntime, Name);
-        await ProtectedLocalStorageStore.DeleteAsync("TryCount");
+
+        await ChampionService
+            .RestartGame(Champions, JsRuntime, Name);
+        await ProtectedLocalStorageStore
+            .DeleteAsync("TryCount");
 
         NavigateToShop();
     }
-    private void UpdateUserGameChampions(List<UserGameChampion> championsToBuy)
+    private void UpdateUserGameChampions
+    (List<UserGameChampion> championsToBuy)
     {
         foreach (var champ in championsToBuy)
         {
@@ -242,7 +249,8 @@
     }
     private async void ShowAlert(string message)
     {
-        await JsRuntime.InvokeVoidAsync("alert", message);
+        await JsRuntime
+            .InvokeVoidAsync("alert", message);
     }
 
     void NavigateToShop()
