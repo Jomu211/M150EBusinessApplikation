@@ -22,6 +22,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false).AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+});
+
+
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
@@ -33,8 +40,19 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<HttpClient>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSignalR();
+builder.Services.AddLogging();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("M150BlazorApp", builder =>
+        builder.WithOrigins("https://localhost:44351/")
+            .AllowAnyHeader()
+            .WithMethods("GET", "POST")
+            .AllowCredentials());
+});
+
 
 var app = builder.Build();
+app.UseCors("M150BlazorApp");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -48,16 +66,19 @@ else
     app.UseHsts();
 }
 
+app.UseDeveloperExceptionPage();
 
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseCors();
 app.UseAuthorization();
 app.MapControllers();
 app.UseWebSockets();
 
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
 
 app.Run();
+
+
+
