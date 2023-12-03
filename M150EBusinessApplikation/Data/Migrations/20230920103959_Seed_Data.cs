@@ -148,6 +148,7 @@ INSERT [dbo].[Heads] ([Id], [Haircolor], [Headgear], [Other], [ChampionId]) VALU
 GO
 SET IDENTITY_INSERT [dbo].[Heads] OFF
 GO");
+            migrationBuilder.Sql($"USE [M150EBusinessApplikationDB]\r\nGO\r\nINSERT [dbo].[AspNetRoles] ([Id], [Name], [NormalizedName], [ConcurrencyStamp]) VALUES (N'admin', N'Admin', N'ADMIN', NULL)\r\nGO\r\nINSERT [dbo].[AspNetRoles] ([Id], [Name], [NormalizedName], [ConcurrencyStamp]) VALUES (N'user', N'User', N'USER', NULL)\r\nGO\r\n");
         }
 
         /// <inheritdoc />
