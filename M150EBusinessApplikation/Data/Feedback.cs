@@ -24,6 +24,12 @@ namespace M150EBusinessApplikation.Data
 
         [Display(Name = "Last Feedback")]
         public DateTime FeedbackTime { get; set; } = DateTime.Now;
+
+        //Star Rating 1-5
+        [Range(1, 5)]
+        [Required]
+        [Display(Name = "Rating")]
+        public int Rating { get; set; } = 5;
         public virtual UserProfil UserProfil { get; set; }
 
         public Feedback() { }
