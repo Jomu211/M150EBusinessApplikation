@@ -1,12 +1,11 @@
 ﻿@page "/championgame"
 @using System.Security.Claims
-@using BootstrapBlazor.Components;
 @using M150EBusinessApplikation.Data;
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.EntityFrameworkCore
 
-@inject M150EBusinessApplikation.Services.ChampionService ChampionService
-@inject M150EBusinessApplikation.Services.UserService UserService
+@inject Services.ChampionService ChampionService
+@inject Services.UserService UserService
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
 @inject ProtectedLocalStorage ProtectedLocalStorageStore
 @inject DialogService DialogService
@@ -372,7 +371,7 @@
 @{
     var filteredChampions = Champions
     .Where(c => Db.UserGameChampions
-        .Any(u => u.ChampionId == c.Id && u.Username == Name && !u.Hidden /*&& u.Bought*/))
+        .Any(u => u.ChampionId == c.Id && u.Username == Name && !u.Hidden))
     .ToList();
 
     var genders = GetGroupedAttributes(filteredChampions, t => t.Gender);
@@ -567,7 +566,7 @@
     }
     public void SetRole()
     {
-        Role = User.HasClaim(ClaimTypes.Role, "Admin") ? "Admin" : "User";
+        Role = User != null && User.HasClaim(ClaimTypes.Role, "Admin") ? "Admin" : "User";
     }
 
     protected override async Task OnInitializedAsync()
@@ -610,24 +609,21 @@
         TryCount = 0;
     }
 
-    private async Task AddCoinsToAccount()
+    private Task AddCoinsToAccount()
     {
-
-        if (UserProfil != null)
+        if (UserProfil == null) return Task.CompletedTask;
+        if (TryCount > 25)
         {
-            if (TryCount > 25)
-            {
-                AddedCoins = 0;
-                UserProfil.Coins += AddedCoins;
-            }
-            else
-            {
-                AddedCoins = 25 - TryCount;
-                UserProfil.Coins += AddedCoins;
-
-            }
+            AddedCoins = 0;
+            UserProfil.Coins += AddedCoins;
         }
+        else
+        {
+            AddedCoins = 25 - TryCount;
+            UserProfil.Coins += AddedCoins;
 
+        }
+        return Task.CompletedTask;
     }
     #endregion
 
@@ -772,7 +768,7 @@
         {
             AddScoreToLeaderboard();
             await AddCoinsToAccount();
-            await OpenFinishDialog(userChamp.Champion);
+            OpenFinishDialog(userChamp.Champion);
             await ClearCount();
             await ChampionService.RestartGame(Champions, JsRuntime, Name);
         }
@@ -791,7 +787,7 @@
         await JsRuntime.InvokeVoidAsync("startGame");
     }
 
-    private async Task OpenFinishDialog(Champion champion)
+    private void OpenFinishDialog(Champion champion)
     {
         var tryText = (TryCount + 1 > 1) ? "tries" : "try";
         var coinText = (AddedCoins + 1 > 1) ? "coins" : "coin";
@@ -837,12 +833,12 @@
                 }),
             };
 
-        await DialogService.Show(option);
+        DialogService.Show(option);
     }
 
-    private async Task HandleButtonClick(DialogOption option)
+    private static void HandleButtonClick(DialogOption option)
     {
-        await option.CloseDialogAsync();
+        option.CloseDialogAsync();
     }
 
     private void AddScoreToLeaderboard()
