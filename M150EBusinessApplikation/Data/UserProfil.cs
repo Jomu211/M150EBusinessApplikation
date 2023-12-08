@@ -9,5 +9,6 @@ namespace M150EBusinessApplikation.Data
         public string Username { get; set; }
         public int? Tries { get; set; }
         public int? Coins { get; set; }
+        public bool PresentReceived { get; set; } = false;
     }
 }

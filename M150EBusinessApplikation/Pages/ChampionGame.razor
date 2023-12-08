@@ -595,6 +595,26 @@
         }
 
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (UserProfil.PresentReceived == false)
+            {
+                await ReceivePresentAsync();
+            }
+        }
+    }
+
+    private async Task ReceivePresentAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("alert", "Hey, you're on our shop for the first time, here's a little gift (50 coins). Go check out the shop and buy some champions if you like :)");
+        UserProfil.Coins += 50;
+        UserProfil.PresentReceived = true;
+        await Db.SaveChangesAsync();
+    }
+
     #endregion
 
     #region Counter
