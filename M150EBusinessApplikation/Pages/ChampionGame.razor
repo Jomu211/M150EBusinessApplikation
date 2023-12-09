@@ -595,15 +595,11 @@
         }
 
     }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (UserProfil.PresentReceived == false)
         {
-            if (UserProfil.PresentReceived == false)
-            {
-                await ReceivePresentAsync();
-            }
+            await ReceivePresentAsync();
         }
     }
 

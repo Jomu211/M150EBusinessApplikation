@@ -25,18 +25,20 @@ namespace M150EBusinessApplikation.Services
         {
             var userProfil = Db.UserProfiles.FirstOrDefault(u => u.Username == name);
 
-            if (userProfil == null)
+            if (userProfil != null) return userProfil;
             {
                 Db.UserProfiles.Add(new Data.UserProfil()
                 {
                     Username = name,
                     Coins = 0,
-                    Tries = null
-
+                    Tries = null,
+                    PresentReceived = false
                 });
                 Db.SaveChanges();
+                return Db.UserProfiles.FirstOrDefault(u => u.Username == name);
+
             }
-            return userProfil;
+            
         }
 
 
