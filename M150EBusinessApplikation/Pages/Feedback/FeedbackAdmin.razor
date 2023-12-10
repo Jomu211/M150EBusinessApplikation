@@ -96,7 +96,6 @@
     public void InizializeFeedbacks()
     {
         Feedbacks = Db.Feedbacks.OrderByDescending(t => t.FeedbackTime).ThenBy(t => t.EmailAddress).ToList();
-
     }
 
 }

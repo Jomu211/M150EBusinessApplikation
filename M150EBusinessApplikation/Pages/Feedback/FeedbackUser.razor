@@ -95,7 +95,6 @@ else
 
     protected override void OnInitialized()
     {
-
         UserService.LoadUserAsync(out User, out Name);
         UserProfil = UserService.InitializeUserProfil(Name);
 

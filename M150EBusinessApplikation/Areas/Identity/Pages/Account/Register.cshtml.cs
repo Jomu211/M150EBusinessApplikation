@@ -101,6 +101,10 @@ namespace M150EBusinessApplikation.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+
+            [Display(Name = "I accept the AGBs")]
+            public bool AcceptAGB { get; set; }
         }
 
 
@@ -114,6 +118,13 @@ namespace M150EBusinessApplikation.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/championgame");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+            if (!Input.AcceptAGB)
+            {
+                ModelState.AddModelError("Input.AcceptAGB", "You must accept the AGBs");
+                return Page();
+            }
+
             if (ModelState.IsValid)
             {
                 var user = CreateUser();

@@ -9,6 +9,7 @@
 
 .navbar-brand {
     font-size: 1.1rem;
+    font-family: 'Poppins', sans-serif;
 }
 
 .oi {
@@ -16,6 +17,10 @@
     font-size: 1.1rem;
     vertical-align: text-top;
     top: 1px;
+}
+
+nav.flex-column {
+    font-family: 'Poppins', sans-serif;
 }
 
 .nav-item {
