@@ -17,6 +17,14 @@
 
                 <input asp-for="Input.ConfirmPassword" class="form-control loginInput" autocomplete="new-password" aria-required="true" placeholder="Password" />
                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+
+                <div class="form-check">
+                    <input asp-for="Input.AcceptAGB" class="form-check-input" name="Input.AcceptAGB" />
+                    <label class="form-check-label" for="Input_AcceptAGB">I accept the <a href="/agb">AGBs</a></label>
+                </div>
+
+                <span asp-validation-for="Input.AcceptAGB" class="text-danger"></span>
+
                 <div>
                     <button type="button" onclick="history.go(-1);" class="ml-md-auto btn btn-primary">Back</button>
 
