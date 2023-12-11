@@ -1,5 +1,8 @@
 ﻿@page
 @model LoginModel
+@{
+    var rootUrl = Url.Content("~/");
+}
 <h3 class="text-center loginContainer">Login</h3>
 <div class="flexContainer">
     <div class="innerLoginContainer">
@@ -11,7 +14,7 @@
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
 
                 <input asp-for="Input.Password" class="form-control loginInput" autocomplete="current-password" aria-required="true" placeholder="Password" />
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
+                <span asp-validation-for="Input.Password" class="text-danger" style="display:block;"></span>
 
                 <input asp-for="Input.RememberMe" class="form-check rememberMe" />
                 <label asp-for="Input.RememberMe" class="form-check-label loginInput rememberMe">Remember me?</label>
@@ -19,7 +22,7 @@
 
 
                 <div>
-                    <button type="button" onclick="history.go(-1);" class="ml-md-auto btn btn-primary">Back</button>
+                    <button type="button" onclick="window.location.href='@rootUrl'" class="ml-md-auto btn btn-primary">Back</button>
 
                     <button id="login-submit" type="submit" class="ml-md-auto btn btn-primary" style="float:right;">Log in</button>
                 </div>

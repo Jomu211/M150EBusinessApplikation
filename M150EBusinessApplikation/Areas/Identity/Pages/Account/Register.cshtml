@@ -1,6 +1,8 @@
 ﻿@page
 @model RegisterModel
-
+@{
+    var rootUrl = Url.Content("~/");
+}
 <h3 class="text-center loginContainer">Register</h3>
 <div class="flexContainer">
     <div class="innerLoginContainer">
@@ -16,17 +18,15 @@
                 <span asp-validation-for="Input.Password" class="text-danger"></span>
 
                 <input asp-for="Input.ConfirmPassword" class="form-control loginInput" autocomplete="new-password" aria-required="true" placeholder="Password" />
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger" style="display:block;"></span>
 
-                <div class="form-check">
-                    <input asp-for="Input.AcceptAGB" class="form-check-input" name="Input.AcceptAGB" />
-                    <label class="form-check-label" for="Input_AcceptAGB">I accept the <a href="/agb">AGBs</a></label>
-                </div>
-
-                <span asp-validation-for="Input.AcceptAGB" class="text-danger"></span>
+             
+                <input asp-for="Input.AcceptAGB" class="form-check agbInput" name="Input.AcceptAGB" />
+                <label class="form-check-label agbLabel" asp-for="Input.AcceptAGB">I accept the <a href="/agb">AGBs</a></label>
+                <span asp-validation-for="Input.AcceptAGB" class="text-danger" style="clear:both; display:inline-blocK;"></span>
 
                 <div>
-                    <button type="button" onclick="history.go(-1);" class="ml-md-auto btn btn-primary">Back</button>
+                    <button type="button" onclick="window.location.href='@rootUrl'" class="ml-md-auto btn btn-primary">Back</button>
 
                     <button id="registerSubmit" type="submit" class="ml-md-auto btn btn-primary" style="float:right;">Register</button>
                 </div>

@@ -13,6 +13,9 @@
         return Redirect("~/");
     }
 }
+@{
+    var rootUrl = Url.Content("~/");
+}
 
 <h3 class="text-center loginContainer">Log out</h3>
 <div class="flexContainer">
@@ -20,7 +23,7 @@
         <div class="loginContainer">
 
             <form id="registerForm" asp-route-action="OnPost" method="post">
-                <button type="button" onclick="history.go(-1);" class="ml-md-auto btn btn-primary">Back</button>
+                <button type="button" onclick="window.location.href='@rootUrl'" class="ml-md-auto btn btn-primary">Back</button>
 
                 <button id="logoutSubmit" type="submit" class="ml-md-auto btn btn-primary">Log out</button>
             </form>
