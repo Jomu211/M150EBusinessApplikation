@@ -113,8 +113,8 @@
 
     .shoppingCardButton {
         min-width: 313px;
-        cursor:pointer;
-        min-height:68px;
+        cursor: pointer;
+        min-height: 68px;
     }
 
     .shoppingCardTitle {
@@ -122,16 +122,32 @@
     }
 </style>
 @code {
+    //Liste von UserGameChampion-Objekten -> ausgewählte Artikel im Warenkorb
     private List<UserGameChampion> ShoppingCart = new List<UserGameChampion>();
+
+    //Liste von Champion-Objekten -> alle verfügbaren Champions
     protected List<Champion> Champions = null!;
+
+    //ClaimsPrincipal des aktuellen Benutzers, von .NET Core bereitgestellt
     protected ClaimsPrincipal? User;
+
+    //Benutzerprofil des aktuellen Benutzers
     protected UserProfil UserProfil = null!;
+
+    // Task -> Authentifizierungsstatus
     protected Task<AuthenticationState> AuthState = null!;
+
+    //Name des aktuellen Benutzers
     protected string? Name;
+
+    //Anzahl Kosten der Champions im Warenkorb
     protected int? Costs = 0;
+
+    //Anzahl Artikel im Warenkorb
     private int ItemsInCart = 0;
 
-
+    //Initalisiert und lädt UserProfil, Name, Champions und ShoppingCart
+    //Berechnet Kosten der Champions im Warenkorb
     protected override async Task OnInitializedAsync()
     {
         UserService.LoadUserAsync(out User, out Name);
@@ -146,11 +162,16 @@
         await GetItemCounter();
     }
 
+    //Holt die Anzahl Artikel im Warenkorb aus dem LocalStorage
+    //Setzt itemCounter auf die Anzahl Artikel im Warenkorb
+    //falls itemCounter nicht existiert, wird er auf 0 gesetzt
     private async Task GetItemCounter()
     {
         var result = await ProtectedLocalStorageStore.GetAsync<string>("itemCounter");
         ItemsInCart = result.Success && int.TryParse(result.Value, out int count) ? count : 0;
     }
+
+    //Verringert den Wert von itemCounter um 1
     private async Task DecreaseItemCounter()
     {
         ItemsInCart--;
@@ -158,6 +179,8 @@
 
     }
 
+    //Holt die Artikel aus dem LocalStorage
+    //Deserialisiert die Artikel und gibt sie zurück
     private async Task<List<UserGameChampion>> GetCartItems()
     {
         var cartJson = await ProtectedLocalStorageStore.GetAsync<string>("shoppingCart");
@@ -170,6 +193,9 @@
         return new List<UserGameChampion>();
     }
 
+    //Entfernt Champion aus dem Warenkorb
+    //Verringert Kosten um Preis des Champions
+    //Serialisiert ShoppingCart und speichert es im LocalStorage
     [ValidateAntiForgeryToken]
     private async Task RemoveChampionFromCart(UserGameChampion champ)
     {
@@ -186,6 +212,9 @@
 
         StateHasChanged();
     }
+
+    //Entfernt alle Champions aus dem Warenkorb
+    //Setzt itemCounter auf 0
     private async Task ClearCart()
     {
         await ProtectedLocalStorageStore.DeleteAsync("shoppingCart");
@@ -195,6 +224,12 @@
         StateHasChanged();
     }
 
+    //Kauft alle Champions im Warenkorb
+    //Überprüft ob genügend Coins vorhanden sind und der Warenkorb nicht leer ist
+    //-> falls ja, werden die Champions gekauft, wird in DB gespeichert, Coins werden abgezogen und der Warenkorb wird geleert
+    //-> falls nein, wird eine Fehlermeldung angezeigt
+    //Zeigt eine Erfolgsmeldung an
+    //Navigiert zurück zur Shop-Seite
     [ValidateAntiForgeryToken]
     private async Task BuyChampionInCart
     (List<UserGameChampion> championsToBuy)
@@ -227,6 +262,9 @@
 
         NavigateToShop();
     }
+
+    //Setzt Bought auf true für alle Champions im Warenkorb
+    //Speichert Änderungen in der Datenbank
     private void UpdateUserGameChampions
     (List<UserGameChampion> championsToBuy)
     {
@@ -236,23 +274,31 @@
             Db.UserGameChampions.Update(champ);
         }
     }
+
+    //Zieht Kosten von Coins ab
+    //Speichert Änderungen in der Datenbank
     private void UpdateUserCoins()
     {
         UserProfil.Coins -= Costs;
         Db.UserProfiles.Update(UserProfil);
     }
 
+    //Speichert Änderungen in der Datenbank
+    //Löscht alle Einträge aus dem ChangeTracker
     private async Task SafeDbChange()
     {
         await Db.SaveChangesAsync();
         Db.ChangeTracker.Clear();
     }
+
+    //Zeigt eine Alert-Box mit der übergebenen Nachricht an
     private async void ShowAlert(string message)
     {
         await JsRuntime
             .InvokeVoidAsync("alert", message);
     }
 
+    //Navigiert zurück zur Shop-Seite
     void NavigateToShop()
     {
         navigation.NavigateTo("/shop");

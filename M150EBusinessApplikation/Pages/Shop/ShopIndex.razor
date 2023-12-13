@@ -79,7 +79,7 @@
     .itemButton {
         float: right;
         /*         min-width:250px;
-                     */ width: 250px;
+                         */ width: 250px;
         text-align: center;
     }
 
@@ -124,16 +124,31 @@
 </style>
 @code {
 
+    //Liste von UserGameChampion-Objekten -> ausgewählte Artikel im Warenkorb
     private List<UserGameChampion> ShoppingCart = new();
+
+    //Liste von UserGameChampion-Objekten -> Champions die User kauft
     protected List<UserGameChampion> ChampionsToBuy = null!;
+
+    //Liste von Champion-Objekten -> alle verfügbaren Champions
     protected List<Champion> Champions = null!;
+
+    //ClaimsPrincipal des aktuellen Benutzers, von .NET Core bereitgestellt
     protected ClaimsPrincipal? User;
+
+    //Benutzerprofil des aktuellen Benutzers
     protected UserProfil UserProfil = null!;
+
+    // Task -> Authentifizierungsstatus
     protected Task<AuthenticationState> AuthState = null!;
+
+    //Name des aktuellen Benutzers
     protected string? Name;
+
+    //Anzahl Artikel im Warenkorb
     private int ItemsInCart = 0;
 
-
+    //Initialisiert und lädt UserProfil, Champions, ChampionsToBuy und Name
     protected override void OnInitialized()
     {
         UserService.LoadUserAsync(out User, out Name);
@@ -143,6 +158,9 @@
         ChampionsToBuy = ChampionService.LoadChampionsToBuy(Name);
     }
 
+    //Wird asynchron aufgerufen
+    //Holt die Anzahl Artikel im Warenkorb aus dem LocalStorage
+    //Setzt itemCounter auf die Anzahl Artikel im Warenkorb
     protected override async Task OnInitializedAsync()
     {
         ShoppingCart = await GetCartItems();
@@ -150,7 +168,7 @@
         await ProtectedLocalStorageStore.SetAsync("itemCounter", ItemsInCart.ToString());
     }
 
-
+    //Erhöht den Wert von itemCounter um 1
     private async void IncreaseItemCounter()
     {
         ItemsInCart++;
@@ -158,6 +176,8 @@
 
     }
 
+    //Holt die Artikel aus dem LocalStorage
+    //Deserialisiert die Artikel und gibt sie zurück
     private async Task<List<UserGameChampion>> GetCartItems()
     {
         var cartJson = await ProtectedLocalStorageStore.GetAsync<string>("shoppingCart");
@@ -170,6 +190,10 @@
         return new List<UserGameChampion>();
     }
 
+    //Fügt den ausgewählten Champion dem Warenkorb hinzu
+    //Überprüft ob der Champion bereits im Warenkorb ist
+    //-> wenn ja, wird eine Fehlermeldung angezeigt
+    //-> wenn nein, wird der Champion dem Warenkorb hinzugefügt
     private async Task AddChampionToCart(UserGameChampion champToBuy)
     {
         if (ShoppingCart.Any(t => t.ChampionId == champToBuy.ChampionId))
@@ -192,6 +216,7 @@
 
     }
 
+    //Navigiert zur ShoppingCart-Seite
     void NavigateToShoppingCart()
     {
         navigation.NavigateTo("/shoppingcart");

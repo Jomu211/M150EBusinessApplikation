@@ -85,14 +85,30 @@ else
 
 @code {
 
+    //ClaimsPrincipal des aktuellen Benutzers, von .NET Core bereitgestellt
     protected ClaimsPrincipal? User;
+
+    //Benutzerprofil des aktuellen Benutzers
     protected UserProfil UserProfil = null!;
+
+    //Name des aktuellen Benutzers
     protected string? Name;
+
+    //Benutzername, abgeleitet aus der E-Mail-Adresse des aktuellen Benutzers
     protected string? Username;
+
+    //Aktuelles Feedback-Objekt
     public Feedback? Feedback { get; set; }
+
+    //Liste von Feedback-Objekten
     public List<Feedback?> Feedbacks { get; set; }
+
+    //Zeit des letzten erhaltenen Feedbacks
     public DateTime? LastFeedbackTime;
 
+
+    //Initalisiert UserProfil und Feedback-Objekt mit Daten aus Datenbank
+    //Username wird aus Email-Adresse generiert
     protected override void OnInitialized()
     {
         UserService.LoadUserAsync(out User, out Name);
@@ -103,6 +119,7 @@ else
         Username = Name.Split('@', 2)[0].Replace('.', ' ');
     }
 
+    //Initialisiert Feedback Model mit Daten aus Datenbank
     public void InitializeFeedbackModel()
     {
         Feedback = new Feedback
@@ -113,11 +130,13 @@ else
             };
     }
 
+    //Aktualisiert LastFeedbackTime des Feedback-Objekts basierend auf zuletzt erhaltenen Feedback für den aktuellen Benutzer
     private void SetLastFeedbackTime()
     {
         LastFeedbackTime = Db.Feedbacks?.OrderByDescending(t => t.FeedbackTime).FirstOrDefault(t => t.UserProfilId == Feedback.UserProfilId)?.FeedbackTime.AddMinutes(3);
     }
 
+    //Speichert Feedback in der Datenbank und navigiert zu Feedback-Seite zurück
     private async Task SubmitFeedback()
     {
         try
@@ -136,7 +155,7 @@ else
             throw e;
         }
     }
-
+    //Aktualisiert Bewertung des Feedback-Objekts mit neuem "value" Wert
     void UpdateRating(int value)
     {
         Feedback.Rating = value;
